@@ -9,6 +9,7 @@ interface CardProps {
   style?: React.CSSProperties;
   headerStyle?: React.CSSProperties;
   bodyStyle?: React.CSSProperties;
+  className?: string;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -19,7 +20,8 @@ const Card: React.FC<CardProps> = ({
   hoverable = false,
   style = {},
   headerStyle = {},
-  bodyStyle = {}
+  bodyStyle = {},
+  className
 }) => {
   const baseCardStyles: React.CSSProperties = {
     backgroundColor: '#fff',
@@ -60,6 +62,7 @@ const Card: React.FC<CardProps> = ({
 
   return (
     <div
+      className={className}
       style={baseCardStyles}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}

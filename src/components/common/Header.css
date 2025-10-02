@@ -214,11 +214,14 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: nowrap;
   }
   
   .title-section {
     justify-content: flex-start;
     text-align: left;
+    flex: 0 0 auto;
+    min-width: auto;
   }
   
   .desktop-title {
@@ -238,7 +241,81 @@
   }
   
   .actions {
-    justify-content: center;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
+  
+  .auth-buttons {
+    justify-content: flex-end !important;
+    margin-right: -1rem;
+    padding-right: 0;
+  }
+  
+  .auth-buttons button:first-child {
+    margin-left: 1.6rem;
+  }
+  
+  .auth-buttons button:last-child {
+    position: relative;
+  }
+  
+  .auth-buttons button:last-child::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #e87500, #f49b90, #e87500);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.6;
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes glowPulse {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.02);
+    }
+  }
+  
+  .shiny-button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shiny-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shine 2s infinite;
+  }
+  
+  .shiny-button:hover::before {
+    animation: none;
+  }
+  
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
   }
   
   .nav-container {

@@ -6,9 +6,10 @@ import { getIconProps } from '../utils/assets';
 
 interface AuthProps {
   onAuthSuccess: () => void;
+  onNavigate?: (page: string) => void;
 }
 
-const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
+const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onNavigate }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -496,19 +497,37 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       )}
 
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#e87500',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#e87500',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+              </button>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('landing')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#666',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  ← Back to Home
+                </button>
+              )}
+            </div>
           </div>
         </Card>
       </div>

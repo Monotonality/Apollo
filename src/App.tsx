@@ -8,12 +8,13 @@ import Dashboard from './components/Dashboard';
 import Directory from './components/Directory';
 import Profile from './components/Profile';
 import About from './components/About';
+import Landing from './components/Landing';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState('landing');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -38,14 +39,20 @@ function App() {
   useEffect(() => {
     const handleRouteChange = () => {
       const path = window.location.pathname;
-      if (path === '/directory') {
+      if (path === '/dashboard') {
+        setCurrentPage('dashboard');
+      } else if (path === '/directory') {
         setCurrentPage('directory');
       } else if (path === '/profile') {
         setCurrentPage('profile');
       } else if (path === '/about') {
         setCurrentPage('about');
+      } else if (path === '/login') {
+        setCurrentPage('login');
+      } else if (path === '/signup') {
+        setCurrentPage('signup');
       } else {
-        setCurrentPage('dashboard');
+        setCurrentPage('landing');
       }
     };
 
@@ -69,12 +76,18 @@ function App() {
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
-    if (page === 'directory') {
+    if (page === 'dashboard') {
+      window.history.pushState({}, '', '/dashboard');
+    } else if (page === 'directory') {
       window.history.pushState({}, '', '/directory');
     } else if (page === 'profile') {
       window.history.pushState({}, '', '/profile');
     } else if (page === 'about') {
       window.history.pushState({}, '', '/about');
+    } else if (page === 'login') {
+      window.history.pushState({}, '', '/login');
+    } else if (page === 'signup') {
+      window.history.pushState({}, '', '/signup');
     } else {
       window.history.pushState({}, '', '/');
     }
@@ -106,21 +119,40 @@ function App() {
   }
 
   const renderCurrentPage = () => {
-    if (!user) {
-      return <Auth onAuthSuccess={handleAuthSuccess} />;
+    // Show landing page for unauthenticated users on root
+    if (!user && (currentPage === 'landing' || currentPage === '')) {
+      return <Landing onNavigate={handleNavigate} />;
     }
 
-    switch (currentPage) {
-      case 'directory':
-        return <Directory currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
-      case 'profile':
-        return <Profile user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
-      case 'about':
-        return <About user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
-      case 'dashboard':
-      default:
-        return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+    // Show auth page for login/signup
+    if (!user && (currentPage === 'login' || currentPage === 'signup')) {
+      return <Auth onAuthSuccess={handleAuthSuccess} onNavigate={handleNavigate} />;
     }
+
+    // Redirect authenticated users to dashboard if they try to access landing/auth
+    if (user && (currentPage === 'landing' || currentPage === 'login' || currentPage === 'signup')) {
+      setCurrentPage('dashboard');
+      window.history.pushState({}, '', '/dashboard');
+      return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+    }
+
+    // Show authenticated pages
+    if (user) {
+      switch (currentPage) {
+        case 'directory':
+          return <Directory currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+        case 'profile':
+          return <Profile user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+        case 'about':
+          return <About user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+        case 'dashboard':
+        default:
+          return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+      }
+    }
+
+    // Fallback to landing page
+    return <Landing onNavigate={handleNavigate} />;
   };
 
   return (

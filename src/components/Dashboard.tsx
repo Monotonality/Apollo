@@ -36,6 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate }) =>
         <p>Welcome to the Apollo dashboard. Use the navigation menu to access different sections of the application.</p>
       </Card>
 
+
     </PageContainer>
   );
 };

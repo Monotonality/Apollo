@@ -22,6 +22,11 @@ interface HeaderProps {
   backLabel?: string;
   navItems?: NavItem[];
   currentPath?: string;
+  showUserInfo?: boolean;
+  showAuthButtons?: boolean;
+  showMobileMenu?: boolean;
+  onLoginClick?: () => void;
+  onSignUpClick?: () => void;
   onNavigate?: (path: string) => void;
   style?: React.CSSProperties;
 }
@@ -35,6 +40,11 @@ const Header: React.FC<HeaderProps> = ({
   backLabel = 'Back',
   navItems = [],
   currentPath = '',
+  showUserInfo = true,
+  showAuthButtons = false,
+  showMobileMenu = true,
+  onLoginClick,
+  onSignUpClick,
   onNavigate,
   style = {}
 }) => {
@@ -71,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* User Section - Hidden on Mobile */}
-        {user && (
+        {user && showUserInfo && (
           <div className="desktop-user-info">
             <UserInfo 
               user={user}
@@ -83,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Mobile User Avatar */}
-        {user && (
+        {user && showUserInfo && (
           <div className="mobile-user-avatar">
             <UserInfo 
               user={user}
@@ -95,19 +105,42 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
+        {/* Auth Buttons for Landing Page */}
+        {!user && showAuthButtons && (
+          <div className="auth-buttons" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <Button
+              variant="secondary"
+              size="medium"
+              onClick={onLoginClick}
+            >
+              Login
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={onSignUpClick}
+              style={{ backgroundColor: '#e87500', borderColor: '#e87500' }}
+            >
+              Sign Up
+            </Button>
+          </div>
+        )}
+
         {/* Mobile Menu Button */}
-        <button
-          className="mobile-menu-button"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle navigation menu"
-        >
-          <span className={`hamburger-icon ${isMobileMenuOpen ? 'hidden' : ''}`}>
-            ☰
-          </span>
-          <span className={`close-icon ${isMobileMenuOpen ? 'visible' : ''}`}>
-            ✕
-          </span>
-        </button>
+        {showMobileMenu && (
+          <button
+            className="mobile-menu-button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <span className={`hamburger-icon ${isMobileMenuOpen ? 'hidden' : ''}`}>
+              ☰
+            </span>
+            <span className={`close-icon ${isMobileMenuOpen ? 'visible' : ''}`}>
+              ✕
+            </span>
+          </button>
+        )}
 
         {/* Actions */}
         <div className="actions">
@@ -139,17 +172,19 @@ const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Mobile Navigation */}
-        <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
-          {navItems.map((item) => (
-            <button
-              key={item.path}
-              className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''}`}
-              onClick={() => handleNavClick(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {showMobileMenu && (
+          <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
+            {navItems.map((item) => (
+              <button
+                key={item.path}
+                className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''}`}
+                onClick={() => handleNavClick(item.path)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </header>
   );

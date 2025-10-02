@@ -2,71 +2,82 @@ import React from 'react';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large';
+  color?: string;
   message?: string;
-  style?: React.CSSProperties;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
-  size = 'medium',
-  message = 'Loading...',
-  style = {}
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+  size = 'medium', 
+  color = '#154734',
+  message
 }) => {
-  const getSizeStyles = (): React.CSSProperties => {
-    const sizes = {
-      small: {
-        width: '20px',
-        height: '20px',
-        borderWidth: '2px'
-      },
-      medium: {
-        width: '40px',
-        height: '40px',
-        borderWidth: '4px'
-      },
-      large: {
-        width: '60px',
-        height: '60px',
-        borderWidth: '6px'
-      }
-    };
-    return sizes[size];
+  const sizeMap = {
+    small: '40px',
+    medium: '60px',
+    large: '80px'
   };
 
-  const containerStyles: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '2rem',
-    ...style
+  const dotSizeMap = {
+    small: '8px',
+    medium: '12px',
+    large: '16px'
   };
 
-  const spinnerStyles: React.CSSProperties = {
-    border: `${getSizeStyles().borderWidth} solid #f3f3f3`,
-    borderTop: `${getSizeStyles().borderWidth} solid #154734`,
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    ...getSizeStyles()
-  };
-
-  const messageStyles: React.CSSProperties = {
-    marginTop: '1rem',
-    color: '#666',
-    fontSize: '1rem'
-  };
+  const loaderSize = sizeMap[size];
+  const dotSize = dotSizeMap[size];
+  const dotSizeHalf = `calc(${dotSize} / 2)`;
+  const dotSizeHalfNeg = `calc(${dotSize} / -2)`;
 
   return (
-    <div style={containerStyles}>
-      <div style={spinnerStyles}></div>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      justifyContent: 'center', 
+      alignItems: 'center',
+      minHeight: '200px',
+      gap: '2rem'
+    }}>
+      <style>
+        {`
+          .loader {
+            height: 15px;
+            aspect-ratio: 5;
+            display: grid;
+            --_g: no-repeat radial-gradient(farthest-side, ${color} 94%, transparent);
+          }
+          .loader:before,
+          .loader:after {
+            content: "";
+            grid-area: 1/1;
+            background:
+              var(--_g) left,
+              var(--_g) right;
+            background-size: 20% 100%;
+            animation: l32 1s infinite; 
+          }
+          .loader:after { 
+            background:
+              var(--_g) calc(1*100%/3),
+              var(--_g) calc(2*100%/3);
+            background-size: 20% 100%;
+            animation-direction: reverse;
+          }
+          @keyframes l32 {
+            80%,100% {transform:rotate(.5turn)}
+          }
+        `}
+      </style>
+      <div className="loader"></div>
       {message && (
-        <p style={messageStyles}>{message}</p>
+        <p style={{ 
+          color: color, 
+          fontSize: '1rem', 
+          margin: 0,
+          textAlign: 'center'
+        }}>
+          {message}
+        </p>
       )}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };
