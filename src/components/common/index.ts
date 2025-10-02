@@ -10,5 +10,17 @@ export { default as PageContainer } from './PageContainer';
 // Icon components
 export { LinkedInIcon, EmailIcon, UserIcon } from './Icons';
 
+// Logo component
+export { default as Logo } from './Logo';
+
+// User Info component
+export { default as UserInfo } from './UserInfo';
+
+// User Card component
+export { default as UserCard } from './UserCard';
+
+// Search Bar component
+export { default as SearchBar } from './SearchBar';
+
 // Export types
 export type { ButtonVariant, ButtonSize } from './Button';

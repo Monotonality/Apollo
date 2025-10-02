@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { UserProfile } from '../types/user';
 import { COLLECTIONS } from '../types/firebase';
-import { PageContainer, Header, LoadingSpinner, Card, RoleBadge } from './common';
+import { PageContainer, Header, LoadingSpinner, SearchBar } from './common';
 import { getIconProps } from '../utils/assets';
 
 interface DirectoryProps {
@@ -14,8 +14,25 @@ interface DirectoryProps {
 
 const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigate }) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const getInitials = (displayName: string) => {
+    const names = displayName.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  };
+
+  const formatLinkedInUrl = (linkedin: string) => {
+    if (!linkedin) return '';
+    if (linkedin.startsWith('http')) return linkedin;
+    if (linkedin.startsWith('linkedin.com/')) return `https://${linkedin}`;
+    return `https://linkedin.com/in/${linkedin}`;
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -39,6 +56,7 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         });
         
         setUsers(usersList);
+        setFilteredUsers(usersList);
       } catch (err) {
         console.error('Error fetching users:', err);
         setError('Failed to load directory');
@@ -50,15 +68,20 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
     fetchUsers();
   }, []);
 
-  const formatLinkedInUrl = (linkedin: string): string => {
-    if (!linkedin) return '';
-    if (linkedin.startsWith('http')) return linkedin;
-    if (linkedin.startsWith('linkedin.com') || linkedin.startsWith('www.linkedin.com')) {
-      return `https://${linkedin}`;
+  // Filter users based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(user => 
+        user.USER_FNAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.USER_LNAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.USER_ORG_ROLE.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered);
     }
-    return `https://linkedin.com/in/${linkedin}`;
-  };
-
+  }, [searchTerm, users]);
 
   if (loading) {
     return (
@@ -82,106 +105,140 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
     <PageContainer>
       <Header
         title="Member Directory"
-        subtitle={`${users.length} member${users.length !== 1 ? 's' : ''} in the organization`}
-        onBack={() => {
-          if (onNavigate) {
-            onNavigate('dashboard');
-          } else {
-            window.history.back();
-          }
+        user={{
+          displayName: currentUser.displayName,
+          role: currentUser.USER_ORG_ROLE
         }}
-        backLabel="Back to Dashboard"
         onSignOut={onSignOut}
+        navItems={[
+          { label: 'Dashboard', path: 'dashboard' },
+          { label: 'Directory', path: 'directory' },
+          { label: 'Analytics', path: 'analytics' },
+          { label: 'Settings', path: 'settings' }
+        ]}
+        currentPath="directory"
+        onNavigate={onNavigate}
       />
 
-      {/* Directory Grid */}
+      {/* Search Bar */}
+      <SearchBar
+        placeholder="Search by name, email, or role..."
+        value={searchTerm}
+        onChange={setSearchTerm}
+      />
+
+      {/* Directory List */}
       <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-        gap: '1.5rem' 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '1rem' 
       }}>
-        {users.map((user) => (
-          <Card
+        {filteredUsers.map((user) => (
+          <div
             key={user.uid}
-            hoverable
-            style={{ margin: 0 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '1rem',
+              backgroundColor: 'white',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              transition: 'box-shadow 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            }}
           >
-            {/* User Info */}
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ 
-                margin: '0 0 0.5rem 0', 
-                color: '#154734',
-                fontSize: '1.25rem'
-              }}>
-                {user.USER_FNAME} {user.USER_LNAME}
-              </h3>
-              
-              <RoleBadge role={user.USER_ORG_ROLE} />
+            {/* User Avatar */}
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              backgroundColor: '#e87500',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '1.5rem',
+              flexShrink: 0
+            }}>
+              {getInitials(user.displayName)}
             </div>
 
-            {/* Contact Info */}
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                marginBottom: '0.5rem',
-                fontSize: '0.9rem'
-              }}>
-                <span style={{ marginRight: '0.5rem', fontWeight: 'bold' }}>Email:</span>
-                <a 
-                  href={`mailto:${user.email}`}
-                  style={{ 
-                    color: '#0d6efd', 
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                >
-                  <img {...getIconProps('email', 16)} />
-                  {user.email}
-                </a>
-              </div>
-
-              {user.USER_LINKEDIN && (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  fontSize: '0.9rem'
+            {/* User Info */}
+            <div style={{ flex: 1 }}>
+              <div style={{ marginBottom: '0.5rem', textAlign: 'left' }}>
+                <h3 style={{ 
+                  margin: '0 0 0.25rem 0', 
+                  color: '#154734',
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  textAlign: 'left'
                 }}>
-                  <span style={{ marginRight: '0.5rem', fontWeight: 'bold' }}>LinkedIn:</span>
-                  <a
-                    href={formatLinkedInUrl(user.USER_LINKEDIN)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: '#0077b5',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
+                  {user.USER_FNAME} {user.USER_LNAME}
+                </h3>
+                <p style={{
+                  fontSize: '0.85rem',
+                  color: '#666',
+                  margin: 0,
+                  lineHeight: '1.2',
+                  textAlign: 'left'
+                }}>
+                  {user.USER_ORG_ROLE}
+                </p>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <img {...getIconProps('email', 16)} />
+                  <a 
+                    href={`mailto:${user.email}`}
+                    style={{ 
+                      color: '#154734', 
+                      textDecoration: 'none'
                     }}
                   >
-                    <img {...getIconProps('linkedin', 16)} />
-                    View Profile
-                    <span style={{ fontSize: '0.8rem' }}>(opens in new tab)</span>
+                    {user.email}
                   </a>
                 </div>
-              )}
+                
+                {user.USER_LINKEDIN && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <img {...getIconProps('linkedin', 16)} />
+                    <a
+                      href={formatLinkedInUrl(user.USER_LINKEDIN)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#154734',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      LinkedIn Profile
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Additional Info */}
             <div style={{ 
-              fontSize: '0.8rem', 
+              textAlign: 'right', 
+              fontSize: '0.85rem', 
               color: '#666',
-              borderTop: '1px solid #eee',
-              paddingTop: '0.75rem'
+              minWidth: '120px'
             }}>
               <div style={{ marginBottom: '0.25rem' }}>
-                <strong>Member since:</strong> {user.createdAt.toLocaleDateString()}
+                <strong>Status:</strong> {user.USER_IS_ACTIVE ? 'Active' : 'Inactive'}
               </div>
               <div style={{ marginBottom: '0.25rem' }}>
-                <strong>Status:</strong> {user.USER_IS_ACTIVE ? 'Active' : 'Inactive'}
+                <strong>Member since:</strong> {user.createdAt.toLocaleDateString()}
               </div>
               {user.USER_TOTAL_VOL > 0 && (
                 <div>
@@ -189,16 +246,26 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       {/* Empty State */}
+      {filteredUsers.length === 0 && users.length > 0 && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '3rem', 
+          color: '#666' 
+        }}>
+          <p>No members found matching your search.</p>
+        </div>
+      )}
+      
       {users.length === 0 && (
         <div style={{ 
           textAlign: 'center', 
-          padding: '3rem',
-          color: '#666'
+          padding: '3rem', 
+          color: '#666' 
         }}>
           <p>No members found in the directory.</p>
         </div>

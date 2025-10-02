@@ -29,10 +29,14 @@ export const ASSET_PATHS = {
     linkedin: getImagePath('icons', 'linkedin-icon.svg'),
     email: getImagePath('icons', 'email-icon.svg'),
     user: getImagePath('icons', 'user-icon.svg'),
+    search: getImagePath('icons', 'search.svg'),
+    eye: getImagePath('icons', 'eye.svg'),
+    eyeSlash: getImagePath('icons', 'eye-slash.svg'),
   },
   logos: {
     apollo: getImagePath('logos', 'apollo-logo.png'),
     utd: getImagePath('logos', 'utd-logo.png'),
+    comet: getImagePath('logos', 'apollo-logo.png'), // Main Apollo logo (Black Comet)
   },
   backgrounds: {
     hero: getImagePath('backgrounds', 'hero-bg.jpg'),
@@ -42,7 +46,7 @@ export const ASSET_PATHS = {
 /**
  * Get icon props for consistent styling
  */
-export const getIconProps = (iconType: 'linkedin' | 'email' | 'user', size: number = 16) => ({
+export const getIconProps = (iconType: 'linkedin' | 'email' | 'user' | 'search' | 'eye' | 'eyeSlash', size: number = 16) => ({
   src: ASSET_PATHS.icons[iconType],
   alt: iconType.charAt(0).toUpperCase() + iconType.slice(1),
   style: { width: size, height: size }

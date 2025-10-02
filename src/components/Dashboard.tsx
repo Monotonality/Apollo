@@ -18,6 +18,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate }) =>
           role: user.USER_ORG_ROLE
         }}
         onSignOut={onSignOut}
+        navItems={[
+          { label: 'Dashboard', path: 'dashboard' },
+          { label: 'Directory', path: 'directory' },
+          { label: 'Analytics', path: 'analytics' },
+          { label: 'Settings', path: 'settings' }
+        ]}
+        currentPath="dashboard"
+        onNavigate={onNavigate}
       />
 
       {/* User Info */}
@@ -53,77 +61,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate }) =>
         </div>
       </Card>
 
-      {/* Quick Actions */}
-      <div style={{ 
-        marginBottom: '2rem',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '1rem'
-      }}>
-        <Card
-          hoverable
-          onClick={() => {
-            if (onNavigate) {
-              onNavigate('directory');
-            } else {
-              window.history.pushState({}, '', '/directory');
-              window.location.reload();
-            }
-          }}
-          style={{ textAlign: 'center' }}
-        >
-          <div style={{ 
-            fontSize: '3rem', 
-            marginBottom: '0.5rem',
-            color: '#154734',
-            fontWeight: 'bold'
-          }}>DIR</div>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#154734' }}>Member Directory</h3>
-          <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>
-            View all organization members, their roles, and contact information
-          </p>
-        </Card>
-
-        <Card
-          style={{ textAlign: 'center', opacity: 0.6 }}
-        >
-          <div style={{ 
-            fontSize: '3rem', 
-            marginBottom: '0.5rem',
-            color: '#6c757d',
-            fontWeight: 'bold'
-          }}>ANAL</div>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#154734' }}>Analytics</h3>
-          <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>
-            Coming soon - Organization statistics and reports
-          </p>
-        </Card>
-
-        <Card
-          style={{ textAlign: 'center', opacity: 0.6 }}
-        >
-          <div style={{ 
-            fontSize: '3rem', 
-            marginBottom: '0.5rem',
-            color: '#6c757d',
-            fontWeight: 'bold'
-          }}>SET</div>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#154734' }}>Settings</h3>
-          <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>
-            Coming soon - Organization settings and configuration
-          </p>
-        </Card>
-      </div>
-
-      {/* Empty Dashboard */}
-      <Card>
-        <div style={{ 
-          textAlign: 'center',
-          color: '#666'
-        }}>
-          <p>Additional dashboard content will be added here based on your specifications.</p>
-        </div>
-      </Card>
     </PageContainer>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { signIn, createUser } from '../services/authService';
 import { CreateUserData } from '../types/user';
 import { PageContainer, Header, Card, Input, Button, LoadingSpinner } from './common';
+import { getIconProps } from '../utils/assets';
 
 interface AuthProps {
   onAuthSuccess: () => void;
@@ -11,6 +12,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Sign in form state
   const [signInEmail, setSignInEmail] = useState('');
@@ -55,10 +57,77 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   };
 
   const handleSignUpDataChange = (field: keyof CreateUserData, value: string | number) => {
+    let processedValue = value;
+    
+    // Apply proper capitalization to first and last names
+    if (field === 'firstName' || field === 'lastName') {
+      const stringValue = value as string;
+      // Capitalize first letter and make the rest lowercase
+      processedValue = stringValue.charAt(0).toUpperCase() + stringValue.slice(1).toLowerCase();
+    }
+    
     setSignUpData(prev => ({
       ...prev,
-      [field]: value
+      [field]: processedValue
     }));
+  };
+
+  const calculatePasswordStrength = (password: string) => {
+    let score = 0;
+    let feedback = '';
+
+    // Length check
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    
+    // Character variety checks
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    // Determine strength level
+    if (score <= 2) {
+      return { strength: 'weak', color: '#dc3545', feedback: 'Weak password' };
+    } else if (score <= 4) {
+      return { strength: 'medium', color: '#e87500', feedback: 'Medium password' };
+    } else {
+      return { strength: 'strong', color: '#198754', feedback: 'Strong password' };
+    }
+  };
+
+  const getPasswordStrengthBar = () => {
+    if (!signUpData.password) return null;
+    
+    const { strength, color, feedback } = calculatePasswordStrength(signUpData.password);
+    const width = strength === 'weak' ? '33%' : strength === 'medium' ? '66%' : '100%';
+    
+    return (
+      <div style={{ marginTop: '0.5rem' }}>
+        <div style={{
+          width: '100%',
+          height: '4px',
+          backgroundColor: '#e0e0e0',
+          borderRadius: '2px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: width,
+            height: '100%',
+            backgroundColor: color,
+            transition: 'all 0.3s ease'
+          }} />
+        </div>
+        <div style={{
+          fontSize: '0.8rem',
+          color: color,
+          marginTop: '0.25rem',
+          fontWeight: '500'
+        }}>
+          {feedback}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -169,19 +238,46 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
               Password:
             </label>
-            <input
-              type="password"
-              value={signUpData.password}
-              onChange={(e) => handleSignUpDataChange('password', e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={signUpData.password}
+                onChange={(e) => handleSignUpDataChange('password', e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  paddingRight: '2.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '1rem'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <img 
+                  {...getIconProps(showPassword ? 'eyeSlash' : 'eye', 16)}
+                  style={{ opacity: 0.6 }}
+                />
+              </button>
+            </div>
+            {getPasswordStrengthBar()}
           </div>
 
 

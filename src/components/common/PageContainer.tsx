@@ -12,7 +12,7 @@ const PageContainer: React.FC<PageContainerProps> = ({
   style = {}
 }) => {
   const containerStyles: React.CSSProperties = {
-    padding: '2rem',
+    padding: '0.5rem 2rem 2rem 2rem',
     maxWidth,
     margin: '0 auto',
     minHeight: '100vh',
