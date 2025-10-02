@@ -88,6 +88,15 @@
   color: white;
 }
 
+.nav-item.members-nav {
+  color: #e87500;
+}
+
+.nav-item.active.members-nav {
+  background-color: #e87500;
+  color: white;
+}
+
 .mobile-menu-button {
   display: none;
   background: none;
@@ -183,6 +192,15 @@
   color: white;
 }
 
+.mobile-nav-item.members-nav {
+  color: #e87500;
+}
+
+.mobile-nav-item.active.members-nav {
+  background-color: #e87500;
+  color: white;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -202,6 +220,16 @@
   
   .mobile-menu-button {
     display: block;
+    position: absolute;
+    right: 3rem;
+    top: 50%;
+    transform: translateY(-50%) !important;
+    z-index: 10;
+    transition: none !important;
+  }
+  
+  .mobile-menu-button:hover {
+    transform: translateY(-50%) !important;
   }
   
   .mobile-nav.open {
@@ -215,13 +243,16 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: nowrap;
+    position: relative;
   }
   
   .title-section {
     justify-content: flex-start;
     text-align: left;
-    flex: 0 0 auto;
-    min-width: auto;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0 1rem 0 0;
   }
   
   .desktop-title {
@@ -238,6 +269,11 @@
   
   .mobile-user-avatar {
     display: block;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
   }
   
   .actions {

@@ -33,6 +33,160 @@ export interface Role {
   permissions: Permissions;
 }
 
+// Roles with their priorities and permissions (based on auth.json)
+export const ROLES: Record<UserRole, Role> = {
+  'Pending User': {
+    priority: 0,
+    permissions: {
+      view_dashboard: false,
+      approve_attendance: false,
+      create_attendance: false,
+      approve_funds: false,
+      approve_volunteering: false,
+      manage_site: false,
+      approve_members: false,
+      create_volunteering: false,
+      create_committees: false,
+      manage_committees: false
+    }
+  },
+  'Inactive Member': {
+    priority: 0,
+    permissions: {
+      view_dashboard: false,
+      approve_attendance: false,
+      create_attendance: false,
+      approve_funds: false,
+      approve_volunteering: false,
+      manage_site: false,
+      approve_members: false,
+      create_volunteering: false,
+      create_committees: false,
+      manage_committees: false
+    }
+  },
+  'Member': {
+    priority: 1,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: false,
+      create_attendance: false,
+      approve_funds: false,
+      approve_volunteering: false,
+      manage_site: false,
+      approve_members: false,
+      create_volunteering: false,
+      create_committees: false,
+      manage_committees: false
+    }
+  },
+  'Finance Officer': {
+    priority: 2,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: false,
+      create_attendance: false,
+      approve_funds: true,
+      approve_volunteering: false,
+      manage_site: false,
+      approve_members: true,
+      create_volunteering: false,
+      create_committees: false,
+      manage_committees: false
+    }
+  },
+  'Internal Affairs Officer': {
+    priority: 3,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: false,
+      approve_volunteering: true,
+      manage_site: false,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  },
+  'Vice President': {
+    priority: 4,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: true,
+      approve_volunteering: true,
+      manage_site: false,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  },
+  'President': {
+    priority: 5,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: true,
+      approve_volunteering: true,
+      manage_site: true,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  },
+  'Program Manager': {
+    priority: 5,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: true,
+      approve_volunteering: true,
+      manage_site: true,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  },
+  'Dean': {
+    priority: 5,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: true,
+      approve_volunteering: true,
+      manage_site: true,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  },
+  'Data & Systems Officer': {
+    priority: 5,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: true,
+      create_attendance: true,
+      approve_funds: true,
+      approve_volunteering: true,
+      manage_site: true,
+      approve_members: true,
+      create_volunteering: true,
+      create_committees: true,
+      manage_committees: true
+    }
+  }
+};
+
 // Authentication context type
 export interface AuthContextType {
   user: UserProfile | null;

@@ -54,14 +54,29 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
             lastLoginAt: data.lastLoginAt?.toDate()
           } as UserProfile;
           
-          // Filter out pending users
-          if (userProfile.USER_ORG_ROLE !== 'Pending User') {
+          // Filter out pending users and null roles (rejected users)
+          if (userProfile.USER_ORG_ROLE !== 'Pending User' && userProfile.USER_ORG_ROLE !== null) {
             usersList.push(userProfile);
           }
         });
         
         setUsers(usersList);
-        setFilteredUsers(usersList);
+        
+        // Separate active and inactive users
+        const activeUsers = usersList.filter(user => user.USER_IS_ACTIVE);
+        const inactiveUsers = usersList.filter(user => !user.USER_IS_ACTIVE);
+        
+        // Sort each group alphabetically by first name
+        const sortedActiveUsers = activeUsers.sort((a, b) => 
+          a.USER_FNAME.localeCompare(b.USER_FNAME)
+        );
+        const sortedInactiveUsers = inactiveUsers.sort((a, b) => 
+          a.USER_FNAME.localeCompare(b.USER_FNAME)
+        );
+        
+        // Combine with inactive users at the bottom
+        const combinedUsers = [...sortedActiveUsers, ...sortedInactiveUsers];
+        setFilteredUsers(combinedUsers);
       } catch (err) {
         console.error('Error fetching users:', err);
         setError('Failed to load directory');
@@ -76,7 +91,18 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
   // Filter users based on search term
   useEffect(() => {
     if (!searchTerm.trim()) {
-      setFilteredUsers(users);
+      // Maintain active/inactive separation when no search
+      const activeUsers = users.filter(user => user.USER_IS_ACTIVE);
+      const inactiveUsers = users.filter(user => !user.USER_IS_ACTIVE);
+      
+      const sortedActiveUsers = activeUsers.sort((a, b) => 
+        a.USER_FNAME.localeCompare(b.USER_FNAME)
+      );
+      const sortedInactiveUsers = inactiveUsers.sort((a, b) => 
+        a.USER_FNAME.localeCompare(b.USER_FNAME)
+      );
+      
+      setFilteredUsers([...sortedActiveUsers, ...sortedInactiveUsers]);
     } else {
       const filtered = users.filter(user => 
         user.USER_FNAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,7 +110,19 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.USER_ORG_ROLE.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredUsers(filtered);
+      
+      // Maintain active/inactive separation even in search results
+      const activeFiltered = filtered.filter(user => user.USER_IS_ACTIVE);
+      const inactiveFiltered = filtered.filter(user => !user.USER_IS_ACTIVE);
+      
+      const sortedActiveFiltered = activeFiltered.sort((a, b) => 
+        a.USER_FNAME.localeCompare(b.USER_FNAME)
+      );
+      const sortedInactiveFiltered = inactiveFiltered.sort((a, b) => 
+        a.USER_FNAME.localeCompare(b.USER_FNAME)
+      );
+      
+      setFilteredUsers([...sortedActiveFiltered, ...sortedInactiveFiltered]);
     }
   }, [searchTerm, users]);
 
@@ -128,7 +166,8 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
           { label: 'Dashboard', path: 'dashboard' },
           { label: 'Directory', path: 'directory' },
           { label: 'Profile', path: 'profile' },
-          { label: 'About', path: 'about' }
+          { label: 'About', path: 'about' },
+          ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : [])
         ]}
         currentPath="directory"
         onNavigate={onNavigate}
@@ -159,7 +198,9 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
               border: '1px solid #e0e0e0',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              transition: 'box-shadow 0.2s ease'
+              transition: 'box-shadow 0.2s ease',
+              position: 'relative',
+              opacity: user.USER_IS_ACTIVE ? 1 : 0.6
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
@@ -168,11 +209,27 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
               e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
             }}
           >
+            {/* Inactive overlay */}
+            {!user.USER_IS_ACTIVE && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                borderRadius: '8px',
+                pointerEvents: 'none',
+                zIndex: 1
+              }} />
+            )}
             {/* User Avatar */}
             <div style={{
               width: '60px',
               height: '60px',
               borderRadius: '50%',
+              position: 'relative',
+              zIndex: 2,
               backgroundColor: '#e87500',
               color: 'white',
               display: 'flex',
@@ -186,7 +243,7 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
             </div>
 
             {/* User Info */}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, position: 'relative', zIndex: 2 }}>
               <div style={{ marginBottom: '0.5rem', textAlign: 'left' }}>
                 <h3 style={{ 
                   margin: '0 0 0.25rem 0', 

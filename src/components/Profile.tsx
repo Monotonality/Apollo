@@ -19,7 +19,7 @@ interface ProfileProps {
 const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isResigning, setIsResigning] = useState(false);
   
   // Form states
   const [newFirstName, setNewFirstName] = useState(user.USER_FNAME);
@@ -27,7 +27,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [resignConfirmation, setResignConfirmation] = useState('');
   
   // Password visibility states
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -146,34 +146,34 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== 'DELETE') {
-      setError('Please type "DELETE" (in all caps) to confirm account deletion');
+  const handleResign = async () => {
+    if (resignConfirmation !== 'RESIGN') {
+      setError('Please type "RESIGN" (in all caps) to confirm resignation');
       return;
     }
 
     setLoading(true);
     setError(null);
-    
-    try {
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) throw new Error('No user logged in');
+    setSuccess(null);
 
-      // Delete Firestore user document
-      await deleteDoc(doc(db, COLLECTIONS.USER, user.uid));
+    try {
+      // Update user to inactive status
+      const userRef = doc(db, COLLECTIONS.USER, user.uid);
+      await updateDoc(userRef, {
+        USER_ORG_ROLE: 'Inactive Member',
+        USER_IS_ACTIVE: false,
+        updatedAt: new Date()
+      });
+
+      setSuccess('You have successfully resigned from the organization. You will be signed out.');
       
-      // Delete Firebase Auth user
-      await deleteUser(firebaseUser);
-      
-      // Sign out and redirect
-      onSignOut();
-    } catch (err: any) {
-      if (err.code === 'auth/requires-recent-login') {
-        setError('Please sign out and sign back in before deleting your account');
-      } else {
-        setError('Failed to delete account. Please try again.');
-      }
-      console.error('Error deleting account:', err);
+      // Sign out after a short delay
+      setTimeout(() => {
+        onSignOut();
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error resigning:', error);
+      setError(error.message || 'Failed to resign');
     } finally {
       setLoading(false);
     }
@@ -260,7 +260,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
           { label: 'Dashboard', path: 'dashboard' },
           { label: 'Directory', path: 'directory' },
           { label: 'Profile', path: 'profile' },
-          { label: 'About', path: 'about' }
+          { label: 'About', path: 'about' },
+          ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : [])
         ]}
         currentPath="profile"
         onNavigate={onNavigate}
@@ -613,76 +614,78 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
         )}
       </Card>
 
-      {/* Delete Account */}
+      {/* Resign from Organization */}
       <Card
-        title="Delete Account"
-        style={{ marginBottom: '2rem', borderColor: '#dc3545' }}
+        title="Resign from Organization"
+        style={{ marginBottom: '2rem', borderColor: '#e87500' }}
       >
-        {!isDeletingAccount ? (
+        {!isResigning ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <strong style={{ color: '#dc3545' }}>Danger Zone</strong>
+              <strong style={{ color: '#e87500' }}>Resignation</strong>
               <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
-                Permanently delete your account and all associated data.
+                Resign from the organization and set your account to inactive status.
               </p>
             </div>
             <Button
-              variant="danger"
+              variant="primary"
               size="medium"
-              onClick={() => setIsDeletingAccount(true)}
+              onClick={() => setIsResigning(true)}
               disabled={loading}
+              style={{ backgroundColor: '#e87500', borderColor: '#e87500' }}
             >
-              Delete Account
+              Resign
             </Button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ 
-              backgroundColor: '#f8d7da', 
-              color: '#721c24', 
+              backgroundColor: '#fff3cd', 
+              color: '#856404', 
               padding: '1rem', 
-              borderRadius: '4px',
-              border: '1px solid #f5c6cb'
+              borderRadius: '4px', 
+              border: '1px solid #ffeaa7' 
             }}>
-              <strong>Warning: This action cannot be undone!</strong>
+              <strong>Resignation Notice</strong>
               <p style={{ margin: '0.5rem 0 0 0' }}>
-                Deleting your account will permanently remove all your data, including your profile information, volunteer credits and attendance records, and all associated data.
+                Resigning will set your account to inactive status. You will lose access to the organization's resources and will be signed out. Your data will be preserved but you will no longer be an active member.
               </p>
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Type "DELETE" (in all caps) to confirm
+                Type "RESIGN" (in all caps) to confirm
               </label>
               <input
                 type="text"
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                value={resignConfirmation}
+                onChange={(e) => setResignConfirmation(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: '1px solid #dc3545',
+                  border: '1px solid #e87500',
                   borderRadius: '4px',
                   fontSize: '1rem'
                 }}
-                placeholder="Type DELETE (all caps) to confirm"
+                placeholder="Type RESIGN (all caps) to confirm"
                 disabled={loading}
               />
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <Button
-                variant="danger"
+                variant="primary"
                 size="medium"
-                onClick={handleDeleteAccount}
-                disabled={loading || deleteConfirmation !== 'DELETE'}
+                onClick={handleResign}
+                disabled={loading || resignConfirmation !== 'RESIGN'}
+                style={{ backgroundColor: '#e87500', borderColor: '#e87500' }}
               >
-                {loading ? 'Deleting...' : 'Delete Account'}
+                {loading ? 'Resigning...' : 'Resign'}
               </Button>
               <Button
                 variant="secondary"
                 size="medium"
                 onClick={() => {
-                  setIsDeletingAccount(false);
-                  setDeleteConfirmation('');
+                  setIsResigning(false);
+                  setResignConfirmation('');
                   clearMessages();
                 }}
                 disabled={loading}

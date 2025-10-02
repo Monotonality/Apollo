@@ -62,6 +62,9 @@ const Header: React.FC<HeaderProps> = ({
     if (title.includes('Apollo ')) {
       return title.replace('Apollo ', '');
     }
+    if (title === 'Member Directory') {
+      return 'Directory';
+    }
     return title;
   };
 
@@ -163,7 +166,7 @@ const Header: React.FC<HeaderProps> = ({
           {navItems.map((item) => (
             <button
               key={item.path}
-              className={`nav-item ${currentPath === item.path ? 'active' : ''}`}
+              className={`nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''}`}
               onClick={() => handleNavClick(item.path)}
             >
               {item.label}
@@ -177,7 +180,7 @@ const Header: React.FC<HeaderProps> = ({
             {navItems.map((item) => (
               <button
                 key={item.path}
-                className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''}`}
+                className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''}`}
                 onClick={() => handleNavClick(item.path)}
               >
                 {item.label}

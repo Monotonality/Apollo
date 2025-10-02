@@ -24,7 +24,8 @@ const About: React.FC<AboutProps> = ({ user, onSignOut, onNavigate }) => {
           { label: 'Dashboard', path: 'dashboard' },
           { label: 'Directory', path: 'directory' },
           { label: 'Profile', path: 'profile' },
-          { label: 'About', path: 'about' }
+          { label: 'About', path: 'about' },
+          ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : [])
         ]}
         currentPath="about"
         onNavigate={onNavigate}
