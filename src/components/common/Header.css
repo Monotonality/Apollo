@@ -262,8 +262,9 @@
   
   .mobile-nav.open {
     display: flex;
-    max-height: 300px;
+    max-height: 80vh;
     padding: 1rem 0;
+    overflow-y: auto;
   }
   
   .top-bar {

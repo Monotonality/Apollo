@@ -7,7 +7,8 @@ export const COLLECTIONS = {
   VOLUNTEER: 'volunteer',
   VOLUNTEERED: 'volunteered',
   ATTENDED: 'attended',
-  ATTENDANCE: 'attendance'
+  ATTENDANCE: 'attendance',
+  REPORT: 'report'
 } as const;
 
 // Firestore document interfaces
@@ -84,4 +85,15 @@ export interface Attendance extends FirestoreDocument {
   ATND_TIMESTAMP: string;         // PK - Unique identifier for attendance event
   ATND_CODE: string;              // Unique attendance code
   ATND_IS_LIVE: boolean;          // Indicates if attendance period is open
+}
+
+// REPORT - Committee reports
+export interface Report extends FirestoreDocument {
+  REP_ID: string;                 // PK - Unique identifier for a report
+  UID: string;                    // FK - ID of the user who authored the report
+  COMM_ID: string;                // FK - ID of the committee the report is from
+  REP_TITLE: string;              // Title of the report
+  REP_DESCRIPTION: string;        // Description/content of the report
+  REP_IS_PUBLIC: boolean;         // Indicates if report is public (visible to all club members) or committee-only
+  REP_TIMESTAMP: Date;            // Timestamp of report creation or update
 }

@@ -304,15 +304,21 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
           role: currentUser.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
-        navItems={[
-          { label: 'Dashboard', path: 'dashboard' },
-          ...(currentUser.USER_ORG_ROLE === 'Member' || currentUser.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Committee', path: 'committee' }] : []),
-          { label: 'Directory', path: 'directory' },
-          { label: 'Profile', path: 'profile' },
-          { label: 'About', path: 'about' },
-          ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
-          ...(currentUser.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
-        ]}
+        navItems={(() => {
+          const items = [
+            { label: 'Dashboard', path: 'dashboard' },
+            ...(currentUser.USER_ORG_ROLE === 'Member' || currentUser.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Committee', path: 'committee' }] : []),
+            { label: 'Directory', path: 'directory' },
+            { label: 'Profile', path: 'profile' },
+            { label: 'About', path: 'about' },
+            ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
+            ...(currentUser.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
+          ];
+          console.log('Members navItems:', items);
+          console.log('Current user permissions:', currentUser.permissions);
+          console.log('Current user role:', currentUser.USER_ORG_ROLE);
+          return items;
+        })()}
         currentPath="members"
         onNavigate={onNavigate}
       />
@@ -424,7 +430,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                   onChange={(value) => handleRoleChange(user.uid, value as UserRole)}
                   options={[
                     { value: user.USER_ORG_ROLE || '', label: user.USER_ORG_ROLE || 'Rejected' },
-                    ...getRoleOptions()
+                    ...getRoleOptions().filter(option => option.value !== (user.USER_ORG_ROLE || ''))
                   ]}
                   disabled={updating === user.uid}
                 />

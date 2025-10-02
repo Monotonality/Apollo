@@ -614,7 +614,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                       value={committee.CHAIR_ID || ''}
                       onChange={(value) => handleChairChange(committee.id, value)}
                       options={getMemberOptions()}
-                      disabled={updatingCommittee === committee.id}
+                      disabled={true}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
