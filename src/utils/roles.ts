@@ -17,6 +17,21 @@ export const ROLE_DEFINITIONS: Record<UserRole, Role> = {
       manage_committees: false
     }
   },
+  'Inactive Member': {
+    priority: 0,
+    permissions: {
+      view_dashboard: true,
+      approve_attendance: false,
+      create_attendance: false,
+      approve_funds: false,
+      approve_volunteering: false,
+      manage_site: false,
+      approve_members: false,
+      create_volunteering: false,
+      create_committees: false,
+      manage_committees: false
+    }
+  },
   'Member': {
     priority: 1,
     permissions: {

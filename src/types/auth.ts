@@ -3,6 +3,7 @@ import { UserProfile } from './user';
 // User roles as defined in auth.json
 export type UserRole = 
   | 'Pending User'
+  | 'Inactive Member'
   | 'Member'
   | 'Finance Officer'
   | 'Internal Affairs Officer'

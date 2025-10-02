@@ -28,6 +28,7 @@ UID FK Links to the USER table.
 COMM_ID FK Links to the COMMITTEE table.
 SERVES_JOIN_DATE N/A Date the user joined the committee.
 SERVES_ROLE N/A The user's role in the committee.
+
 COMMITTEE
 Column Name Key Type Description
 COMM_ID PK Unique identifier for a committee.
@@ -36,6 +37,7 @@ COMM_DESCRIPTION N/A Detailed description of the committee.
 CHAIR_ID FK ID of the user who chairs the committee.
 COMM_IS_ACTIVE N/A Indicates if the committee is active.
 COMM_TIMESTAMP N/A Timestamp of creation or update.
+
 FUNDING
 Column Name Key Type Description
 FUND_ID PK Unique identifier for funding record.
@@ -46,6 +48,7 @@ FUND_DESC N/A Description of the funding activity.
 FUND_AMT N/A Amount of funding.
 FUND_TIMESTAMP N/A Creation/update timestamp.
 FUND_NEED_BY N/A Date funds are needed by.
+
 VOLUNTEER
 Column Name Key Type Description
 VOL_ID PK Unique identifier for volunteer opportunity.
@@ -57,6 +60,7 @@ VOL_DATE N/A Date of the opportunity.
 VOL_TIME N/A Time of the opportunity.
 VOL_LOCATION N/A Location of the opportunity.
 VOL_TIMESTAMP N/A Creation/update timestamp.
+
 VOLUNTEERED
 Column Name Key Type Description
 UID FK Links to the USER table.
@@ -65,6 +69,7 @@ VOL_DATE_REQUESTED N/A Date user requested to volunteer.
 VOL_IS_APPROVED N/A Indicates if request approved.
 VOL_PROOF N/A Reference to proof of completion.
 VOL_TIMESTAMP N/A Creation/update timestamp.
+
 ATTENDED
 Column Name Key Type Description
 UID FK Links to the USER table.
@@ -72,6 +77,7 @@ ATND_TIME FK Links to the ATTENDANCE table.
 ATNDED_CODE N/A Code used to record attendance.
 ATNDED_IS_VALID N/A Indicates if attendance record is valid.
 ATNDED_TIMESTAMP N/A Creation/update timestamp.
+
 ATTENDANCE
 Column Name Key Type Description
 ATND_TIMESTAMP PK Unique identifier for attendance event.

@@ -62,7 +62,10 @@ export const signOut = async (): Promise<void> => {
 // Create new user
 export const createUser = async (userData: CreateUserData): Promise<UserProfile> => {
   try {
+    console.log('Starting user creation process...');
+    
     // Create Firebase Auth user
+    console.log('Creating Firebase Auth user...');
     const userCredential = await createUserWithEmailAndPassword(
       auth, 
       userData.email, 
@@ -70,19 +73,23 @@ export const createUser = async (userData: CreateUserData): Promise<UserProfile>
     );
     
     const firebaseUser = userCredential.user;
+    console.log('Firebase Auth user created:', firebaseUser.uid);
     
     // Generate display name from first and last name
     const displayName = `${userData.firstName} ${userData.lastName}`;
     
     // Update Firebase Auth profile
+    console.log('Updating Firebase Auth profile...');
     await updateProfile(firebaseUser, {
       displayName: displayName
     });
     
     // Check if this is the first user (Data & Systems Officer)
+    console.log('Checking for existing users...');
     const existingUsers = await getDocs(collection(db, COLLECTIONS.USER));
     const isFirstUser = existingUsers.empty;
     const userRole: UserRole = isFirstUser ? 'Data & Systems Officer' : 'Pending User';
+    console.log('Is first user:', isFirstUser, 'Role:', userRole);
     
     // Create user profile in Firestore with database schema fields
     const userProfile: UserProfile = {
@@ -105,7 +112,9 @@ export const createUser = async (userData: CreateUserData): Promise<UserProfile>
       updatedAt: new Date()
     };
     
+    console.log('Creating user profile in Firestore...', userProfile);
     await setDoc(doc(db, COLLECTIONS.USER, firebaseUser.uid), userProfile);
+    console.log('User profile created successfully!');
     
     return userProfile;
   } catch (error) {

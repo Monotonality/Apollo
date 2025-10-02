@@ -7,9 +7,9 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage';
 const firebaseConfig = {
   // These will be replaced with actual config when deploying to production
   apiKey: "demo-api-key",
-  authDomain: "apollo-ugdc-demo.firebaseapp.com",
-  projectId: "apollo-ugdc-demo",
-  storageBucket: "apollo-ugdc-demo.appspot.com",
+  authDomain: "demo-no-project.firebaseapp.com",
+  projectId: "demo-no-project",
+  storageBucket: "demo-no-project.appspot.com",
   messagingSenderId: "123456789",
   appId: "1:123456789:web:abcdef123456"
 };
