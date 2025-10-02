@@ -169,7 +169,8 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
           { label: 'Profile', path: 'profile' },
           { label: 'About', path: 'about' },
           ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
-          ...(currentUser.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
+          ...(currentUser.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : []),
+          ...(currentUser.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Admin', path: 'admin' }] : [])
         ]}
         currentPath="directory"
         onNavigate={onNavigate}

@@ -114,6 +114,15 @@
   color: white;
 }
 
+.nav-item.admin-nav {
+  color: #e87500; /* Orange text when inactive */
+}
+
+.nav-item.active.admin-nav {
+  background-color: #e87500; /* Orange background when active */
+  color: white;
+}
+
 
 .mobile-menu-button {
   display: none;
@@ -224,6 +233,15 @@
 }
 
 .mobile-nav-item.active.committees-nav {
+  background-color: #e87500; /* Orange background when active */
+  color: white;
+}
+
+.mobile-nav-item.admin-nav {
+  color: #e87500; /* Orange text when inactive */
+}
+
+.mobile-nav-item.active.admin-nav {
   background-color: #e87500; /* Orange background when active */
   color: white;
 }

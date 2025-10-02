@@ -11,6 +11,7 @@ import About from './components/About';
 import Members from './components/Members';
 import Committee from './components/Committee';
 import Committees from './components/Committees';
+import Admin from './components/Admin';
 import Landing from './components/Landing';
 import './App.css';
 
@@ -56,6 +57,8 @@ function App() {
         setCurrentPage('about');
       } else if (path === '/members') {
         setCurrentPage('members');
+      } else if (path === '/admin') {
+        setCurrentPage('admin');
       } else if (path === '/login') {
         setCurrentPage('login');
       } else if (path === '/signup') {
@@ -99,6 +102,8 @@ function App() {
       window.history.pushState({}, '', '/about');
     } else if (page === 'members') {
       window.history.pushState({}, '', '/members');
+    } else if (page === 'admin') {
+      window.history.pushState({}, '', '/admin');
     } else if (page === 'login') {
       window.history.pushState({}, '', '/login');
     } else if (page === 'signup') {
@@ -171,6 +176,8 @@ function App() {
           return <About user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
         case 'members':
           return <Members currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+        case 'admin':
+          return <Admin user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
         case 'dashboard':
         default:
           return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;

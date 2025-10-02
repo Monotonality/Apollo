@@ -263,7 +263,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
           { label: 'Profile', path: 'profile' },
           { label: 'About', path: 'about' },
           ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
-          ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
+          ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : []),
+          ...(user.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Admin', path: 'admin' }] : [])
         ]}
         currentPath="profile"
         onNavigate={onNavigate}

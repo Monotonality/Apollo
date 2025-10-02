@@ -257,7 +257,8 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
             { label: 'Profile', path: 'profile' },
             { label: 'About', path: 'about' },
             ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
-            ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
+            ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : []),
+            ...(user.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Admin', path: 'admin' }] : [])
           ]}
           currentPath="committee"
           onNavigate={onNavigate}
@@ -343,7 +344,8 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
           { label: 'Profile', path: 'profile' },
           { label: 'About', path: 'about' },
           ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
-          ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
+          ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : []),
+          ...(user.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Admin', path: 'admin' }] : [])
         ]}
         currentPath="committee"
         onNavigate={onNavigate}
