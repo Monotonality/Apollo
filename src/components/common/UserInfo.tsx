@@ -7,6 +7,7 @@ interface UserInfoProps {
     role: string;
   };
   onSignOut?: () => void;
+  onNavigate?: (path: string) => void;
   showDropdown?: boolean;
   mobileOnly?: boolean;
 }
@@ -14,6 +15,7 @@ interface UserInfoProps {
 const UserInfo: React.FC<UserInfoProps> = ({ 
   user, 
   onSignOut,
+  onNavigate,
   showDropdown = true,
   mobileOnly = false
 }) => {
@@ -37,6 +39,20 @@ const UserInfo: React.FC<UserInfoProps> = ({
     setIsDropdownOpen(false);
     if (onSignOut) {
       onSignOut();
+    }
+  };
+
+  const handleProfileClick = () => {
+    setIsDropdownOpen(false);
+    if (onNavigate) {
+      onNavigate('profile');
+    }
+  };
+
+  const handleAboutClick = () => {
+    setIsDropdownOpen(false);
+    if (onNavigate) {
+      onNavigate('about');
     }
   };
 
@@ -75,12 +91,12 @@ const UserInfo: React.FC<UserInfoProps> = ({
       {/* User Dropdown */}
       {showDropdown && isDropdownOpen && (
         <div className="user-dropdown">
-          <div className="dropdown-item">
+          <button className="dropdown-item" onClick={handleProfileClick}>
             <span>Profile</span>
-          </div>
-          <div className="dropdown-item">
-            <span>Settings</span>
-          </div>
+          </button>
+          <button className="dropdown-item" onClick={handleAboutClick}>
+            <span>About</span>
+          </button>
           <div className="dropdown-divider"></div>
           <button className="dropdown-item danger" onClick={handleSignOut}>
             <span>Sign Out</span>

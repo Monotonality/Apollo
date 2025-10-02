@@ -10,8 +10,8 @@ export interface UserProfile {
   USER_IS_ACTIVE: boolean;        // Indicates if the user account is active
   USER_LINKEDIN?: string;         // User's LinkedIn profile information (URL or ID)
   USER_ORG_ROLE: UserRole;        // The user's role within an organization
-  USER_TOTAL_VOL: number;         // Total number of volunteer hours accrued
-  USER_CURRENT_VOL: number;       // Current/active volunteer hours
+  USER_TOTAL_VOL: number;         // Total number of volunteer credits accrued
+  USER_CURRENT_VOL: number;       // Current/active volunteer credits
   USER_ATND_TOTAL: number;        // Total attendance count for the user
   USER_IS_ATND_EXEMPT: boolean;   // Indicates if the user is exempt from attendance requirements
   

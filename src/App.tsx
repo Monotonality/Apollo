@@ -6,6 +6,8 @@ import { convertFirebaseUser } from './services/authService';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import Directory from './components/Directory';
+import Profile from './components/Profile';
+import About from './components/About';
 import './App.css';
 
 function App() {
@@ -38,6 +40,10 @@ function App() {
       const path = window.location.pathname;
       if (path === '/directory') {
         setCurrentPage('directory');
+      } else if (path === '/profile') {
+        setCurrentPage('profile');
+      } else if (path === '/about') {
+        setCurrentPage('about');
       } else {
         setCurrentPage('dashboard');
       }
@@ -65,6 +71,10 @@ function App() {
     setCurrentPage(page);
     if (page === 'directory') {
       window.history.pushState({}, '', '/directory');
+    } else if (page === 'profile') {
+      window.history.pushState({}, '', '/profile');
+    } else if (page === 'about') {
+      window.history.pushState({}, '', '/about');
     } else {
       window.history.pushState({}, '', '/');
     }
@@ -103,6 +113,10 @@ function App() {
     switch (currentPage) {
       case 'directory':
         return <Directory currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+      case 'profile':
+        return <Profile user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+      case 'about':
+        return <About user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
       case 'dashboard':
       default:
         return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;

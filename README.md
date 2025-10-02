@@ -117,7 +117,7 @@ For detailed schema information, see `dev/DB_relational_diagram_explained`.
    - First user: Automatically assigned "Data & Systems Officer" role
    - Subsequent users: Assigned "Pending User" role
 4. User profile created in Firestore with all database schema fields
-5. Default values set for volunteer hours, attendance, and other fields
+5. Default values set for volunteer credits, attendance, and other fields
 
 ## Contributing
 

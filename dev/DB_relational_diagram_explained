@@ -11,8 +11,8 @@ USER_LNAME N/A User's last name.
 USER_IS_ACTIVE N/A Indicates if the user account is active (boolean/flag).
 USER_LINKEDIN N/A User's LinkedIn profile information (URL or ID) - defaults to empty.
 USER_ORG_ROLE N/A The user's role within an organization (defaults to 'Pending User', first user gets 'Data & Systems Officer').
-USER_TOTAL_VOL N/A Total number of volunteer hours accrued (defaults to 0).
-USER_CURRENT_VOL N/A Current/active volunteer hours (defaults to 0).
+USER_TOTAL_VOL N/A Total number of volunteer credits accrued (defaults to 0).
+USER_CURRENT_VOL N/A Current/active volunteer credits (defaults to 0).
 USER_ATND_TOTAL N/A Total attendance count for the user (defaults to 0).
 USER_IS_ATND_EXEMPT N/A Indicates if the user is exempt from attendance requirements (defaults to false).
 permissions N/A User's permissions based on their role.

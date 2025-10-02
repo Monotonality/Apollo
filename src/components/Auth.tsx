@@ -31,8 +31,24 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     setLoading(true);
     setError(null);
 
+    // Validate and sanitize sign-in inputs only on submission
+    const sanitizedEmail = sanitizeInput(signInEmail);
+    const sanitizedPassword = sanitizeInput(signInPassword);
+
+    if (!validateEmail(sanitizedEmail)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePassword(sanitizedPassword)) {
+      setError('Invalid password format');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await signIn(signInEmail, signInPassword);
+      await signIn(sanitizedEmail, sanitizedPassword);
       onAuthSuccess();
     } catch (error: any) {
       setError(error.message || 'Sign in failed');
@@ -46,8 +62,36 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     setLoading(true);
     setError(null);
 
+    // Final validation before submission
+    if (!validateEmail(signUpData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!validateName(signUpData.firstName) || !validateName(signUpData.lastName)) {
+      setError('Names can only contain letters, spaces, hyphens, and apostrophes');
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePassword(signUpData.password)) {
+      setError('Password must be 6-128 characters and cannot contain dangerous patterns');
+      setLoading(false);
+      return;
+    }
+
+    // Sanitize all data before sending
+    const sanitizedData = {
+      ...signUpData,
+      email: sanitizeInput(signUpData.email).toLowerCase(),
+      firstName: sanitizeInput(signUpData.firstName),
+      lastName: sanitizeInput(signUpData.lastName),
+      password: signUpData.password // Password is already validated
+    };
+
     try {
-      await createUser(signUpData);
+      await createUser(sanitizedData);
       onAuthSuccess();
     } catch (error: any) {
       setError(error.message || 'Sign up failed');
@@ -56,15 +100,66 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     }
   };
 
+  // Input sanitization and validation
+  const sanitizeInput = (input: string): string => {
+    // Remove potentially dangerous characters and patterns
+    return input
+      .replace(/[<>\"'%;()&+]/g, '') // Remove HTML/script injection characters
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/data:/gi, '') // Remove data: protocol
+      .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+      .trim(); // Remove leading/trailing whitespace
+  };
+
+  const validateEmail = (email: string): boolean => {
+    // Basic email validation with injection protection
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email) && email.length <= 254; // RFC 5321 limit
+  };
+
+  const validateName = (name: string): boolean => {
+    // Allow only letters, spaces, hyphens, and apostrophes
+    const nameRegex = /^[a-zA-Z\s\-']{1,50}$/;
+    return nameRegex.test(name);
+  };
+
+  const validatePassword = (password: string): boolean => {
+    // Password validation with injection protection
+    if (password.length < 6 || password.length > 128) return false;
+    
+    // Check for dangerous patterns
+    const dangerousPatterns = [
+      /javascript:/gi,
+      /data:/gi,
+      /vbscript:/gi,
+      /<script/gi,
+      /<iframe/gi,
+      /<object/gi,
+      /<embed/gi
+    ];
+    
+    return !dangerousPatterns.some(pattern => pattern.test(password));
+  };
+
   const handleSignUpDataChange = (field: keyof CreateUserData, value: string | number) => {
     let processedValue = value;
     
-    // Apply proper capitalization to first and last names
-    if (field === 'firstName' || field === 'lastName') {
-      const stringValue = value as string;
-      // Capitalize first letter and make the rest lowercase
-      processedValue = stringValue.charAt(0).toUpperCase() + stringValue.slice(1).toLowerCase();
+    if (typeof value === 'string') {
+      // Apply field-specific processing (but don't sanitize during typing)
+      if (field === 'firstName' || field === 'lastName') {
+        // Only capitalize, don't validate during typing
+        if (value.length > 0) {
+          processedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+        }
+      } else if (field === 'email') {
+        // Convert to lowercase for email
+        processedValue = value.toLowerCase();
+      }
+      // For password, just store the value as-is during typing
     }
+    
+    // Clear any existing errors
+    if (error) setError(null);
     
     setSignUpData(prev => ({
       ...prev,
@@ -166,6 +261,11 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               value={signInEmail}
               onChange={(e) => setSignInEmail(e.target.value)}
               required
+              maxLength={254}
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -180,19 +280,51 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
               Password:
             </label>
-            <input
-              type="password"
-              value={signInPassword}
-              onChange={(e) => setSignInPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={signInPassword}
+                onChange={(e) => setSignInPassword(e.target.value)}
+                required
+                maxLength={128}
+                minLength={6}
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  paddingRight: '2.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '1rem'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <img 
+                  {...getIconProps(showPassword ? 'eyeSlash' : 'eye', 16)}
+                  style={{ opacity: 0.6 }}
+                />
+              </button>
+            </div>
           </div>
 
           <button
@@ -224,6 +356,11 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               value={signUpData.email}
               onChange={(e) => handleSignUpDataChange('email', e.target.value)}
               required
+              maxLength={254}
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -244,6 +381,12 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 value={signUpData.password}
                 onChange={(e) => handleSignUpDataChange('password', e.target.value)}
                 required
+                maxLength={128}
+                minLength={6}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 style={{
                   width: '100%',
                   padding: '0.5rem',
@@ -290,6 +433,12 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               value={signUpData.firstName}
               onChange={(e) => handleSignUpDataChange('firstName', e.target.value)}
               required
+              maxLength={50}
+              autoComplete="given-name"
+              autoCapitalize="words"
+              autoCorrect="off"
+              spellCheck="false"
+              pattern="[a-zA-Z\s\-']{1,50}"
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -309,6 +458,12 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               value={signUpData.lastName}
               onChange={(e) => handleSignUpDataChange('lastName', e.target.value)}
               required
+              maxLength={50}
+              autoComplete="family-name"
+              autoCapitalize="words"
+              autoCorrect="off"
+              spellCheck="false"
+              pattern="[a-zA-Z\s\-']{1,50}"
               style={{
                 width: '100%',
                 padding: '0.5rem',

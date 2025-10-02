@@ -21,44 +21,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate }) =>
         navItems={[
           { label: 'Dashboard', path: 'dashboard' },
           { label: 'Directory', path: 'directory' },
-          { label: 'Analytics', path: 'analytics' },
-          { label: 'Settings', path: 'settings' }
+          { label: 'Profile', path: 'profile' },
+          { label: 'About', path: 'about' }
         ]}
         currentPath="dashboard"
         onNavigate={onNavigate}
       />
 
-      {/* User Info */}
+      {/* Dashboard Content */}
       <Card
-        title="Account Information"
+        title="Welcome to Apollo"
         style={{ marginBottom: '2rem' }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div>
-            <strong>Email:</strong> {user.email}
-          </div>
-          <div>
-            <strong>Role:</strong> <RoleBadge role={user.USER_ORG_ROLE} size="small" />
-          </div>
-          <div>
-            <strong>Member Since:</strong> {user.createdAt.toLocaleDateString()}
-          </div>
-          <div>
-            <strong>Total Volunteer Hours:</strong> {user.USER_TOTAL_VOL || 0}
-          </div>
-          <div>
-            <strong>Current Volunteer Hours:</strong> {user.USER_CURRENT_VOL || 0}
-          </div>
-          <div>
-            <strong>Total Attendance:</strong> {user.USER_ATND_TOTAL || 0}
-          </div>
-          <div>
-            <strong>Attendance Exempt:</strong> {user.USER_IS_ATND_EXEMPT ? 'Yes' : 'No'}
-          </div>
-          <div>
-            <strong>Account Active:</strong> {user.USER_IS_ACTIVE ? 'Yes' : 'No'}
-          </div>
-        </div>
+        <p>Welcome to the Apollo dashboard. Use the navigation menu to access different sections of the application.</p>
       </Card>
 
     </PageContainer>

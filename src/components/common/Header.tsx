@@ -76,6 +76,7 @@ const Header: React.FC<HeaderProps> = ({
             <UserInfo 
               user={user}
               onSignOut={onSignOut}
+              onNavigate={onNavigate}
               showDropdown={true}
             />
           </div>
@@ -87,6 +88,7 @@ const Header: React.FC<HeaderProps> = ({
             <UserInfo 
               user={user}
               onSignOut={onSignOut}
+              onNavigate={onNavigate}
               showDropdown={true}
               mobileOnly={true}
             />

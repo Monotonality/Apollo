@@ -47,12 +47,17 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         const usersList: UserProfile[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          usersList.push({
+          const userProfile = {
             ...data,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
             lastLoginAt: data.lastLoginAt?.toDate()
-          } as UserProfile);
+          } as UserProfile;
+          
+          // Filter out pending users
+          if (userProfile.USER_ORG_ROLE !== 'Pending User') {
+            usersList.push(userProfile);
+          }
         });
         
         setUsers(usersList);
@@ -103,6 +108,15 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
 
   return (
     <PageContainer>
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .directory-additional-info {
+              display: none !important;
+            }
+          }
+        `}
+      </style>
       <Header
         title="Member Directory"
         user={{
@@ -113,8 +127,8 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         navItems={[
           { label: 'Dashboard', path: 'dashboard' },
           { label: 'Directory', path: 'directory' },
-          { label: 'Analytics', path: 'analytics' },
-          { label: 'Settings', path: 'settings' }
+          { label: 'Profile', path: 'profile' },
+          { label: 'About', path: 'about' }
         ]}
         currentPath="directory"
         onNavigate={onNavigate}
@@ -227,8 +241,8 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
               </div>
             </div>
 
-            {/* Additional Info */}
-            <div style={{ 
+            {/* Additional Info - Hidden on Mobile */}
+            <div className="directory-additional-info" style={{ 
               textAlign: 'right', 
               fontSize: '0.85rem', 
               color: '#666',
