@@ -8,6 +8,7 @@ import PageContainer from './common/PageContainer';
 import Header from './common/Header';
 import Card from './common/Card';
 import Button from './common/Button';
+import Select, { SelectOption } from './common/Select';
 
 interface CommitteesProps {
   user: UserProfile;
@@ -249,6 +250,16 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
     return chair ? `${chair.USER_FNAME} ${chair.USER_LNAME}` : 'Unknown';
   };
 
+  const getMemberOptions = (): SelectOption[] => {
+    return [
+      { value: '', label: 'None' },
+      ...members.map(member => ({
+        value: member.uid,
+        label: `${member.USER_FNAME} ${member.USER_LNAME}`
+      }))
+    ];
+  };
+
   return (
     <PageContainer>
       <style>
@@ -271,6 +282,26 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
+          }
+          
+          .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+          }
+          
+          .collapsible-content.open {
+            max-height: 2000px;
+            opacity: 1;
+          }
+          
+          .collapse-button {
+            transition: transform 0.2s ease-in-out;
+          }
+          
+          .collapse-button.rotated {
+            transform: rotate(180deg);
           }
           
           @media (max-width: 768px) {
@@ -316,7 +347,6 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
         {!isCreating ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <strong style={{ color: '#154734' }}>Create New Committee</strong>
               <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
                 Set up a new committee with chair selection and configuration.
               </p>
@@ -470,6 +500,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
               <span>Active Committees ({committees.filter(committee => committee.COMM_IS_ACTIVE).length})</span>
               <button
                 onClick={() => toggleSection('active')}
+                className={`collapse-button ${collapsedSections.active ? '' : 'rotated'}`}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -480,13 +511,13 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 }}
                 aria-label={collapsedSections.active ? 'Expand section' : 'Collapse section'}
               >
-                {collapsedSections.active ? '▼' : '▲'}
+                ▼
               </button>
             </div>
           }
           style={{ marginBottom: '2rem' }}
         >
-          {!collapsedSections.active && (
+          <div className={`collapsible-content ${!collapsedSections.active ? 'open' : ''}`}>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {committees.filter(committee => committee.COMM_IS_ACTIVE).map((committee) => (
                 <div key={committee.id} className="member-item" style={{ backgroundColor: '#fff' }}>
@@ -507,26 +538,12 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                     </p>
                   </div>
                   <div className="member-buttons" style={{ alignItems: 'center' }}>
-                    <select
+                    <Select
                       value={committee.CHAIR_ID || ''}
-                      onChange={(e) => handleChairChange(committee.id, e.target.value)}
+                      onChange={(value) => handleChairChange(committee.id, value)}
+                      options={getMemberOptions()}
                       disabled={updatingCommittee === committee.id}
-                      style={{
-                        padding: '0.25rem 0.5rem',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '0.875rem',
-                        backgroundColor: updatingCommittee === committee.id ? '#f8f9fa' : '#fff',
-                        cursor: updatingCommittee === committee.id ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      <option value="">None</option>
-                      {members.map((member) => (
-                        <option key={member.uid} value={member.uid}>
-                          {member.USER_FNAME} {member.USER_LNAME}
-                        </option>
-                      ))}
-                    </select>
+                    />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="checkbox"
@@ -543,7 +560,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </Card>
       )}
 
@@ -555,6 +572,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
               <span>Inactive Committees ({committees.filter(committee => !committee.COMM_IS_ACTIVE).length})</span>
               <button
                 onClick={() => toggleSection('inactive')}
+                className={`collapse-button ${collapsedSections.inactive ? '' : 'rotated'}`}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -565,13 +583,13 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 }}
                 aria-label={collapsedSections.inactive ? 'Expand section' : 'Collapse section'}
               >
-                {collapsedSections.inactive ? '▼' : '▲'}
+                ▼
               </button>
             </div>
           }
           style={{ marginBottom: '2rem' }}
         >
-          {!collapsedSections.inactive && (
+          <div className={`collapsible-content ${!collapsedSections.inactive ? 'open' : ''}`}>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {committees.filter(committee => !committee.COMM_IS_ACTIVE).map((committee) => (
                 <div key={committee.id} className="member-item inactive">
@@ -592,26 +610,12 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                     </p>
                   </div>
                   <div className="member-buttons" style={{ alignItems: 'center' }}>
-                    <select
+                    <Select
                       value={committee.CHAIR_ID || ''}
-                      onChange={(e) => handleChairChange(committee.id, e.target.value)}
+                      onChange={(value) => handleChairChange(committee.id, value)}
+                      options={getMemberOptions()}
                       disabled={updatingCommittee === committee.id}
-                      style={{
-                        padding: '0.25rem 0.5rem',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '0.875rem',
-                        backgroundColor: updatingCommittee === committee.id ? '#f8f9fa' : '#fff',
-                        cursor: updatingCommittee === committee.id ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      <option value="">None</option>
-                      {members.map((member) => (
-                        <option key={member.uid} value={member.uid}>
-                          {member.USER_FNAME} {member.USER_LNAME}
-                        </option>
-                      ))}
-                    </select>
+                    />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="checkbox"
@@ -628,7 +632,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </Card>
       )}
     </PageContainer>

@@ -12,6 +12,7 @@ import Card from './common/Card';
 import RoleBadge from './common/RoleBadge';
 import Button from './common/Button';
 import LoadingSpinner from './common/LoadingSpinner';
+import Select, { SelectOption } from './common/Select';
 
 interface MembersProps {
   currentUser: UserProfile;
@@ -203,6 +204,13 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
     return ROLE_DEFINITIONS[role]?.permissions || ROLE_DEFINITIONS['Member'].permissions;
   };
 
+  const getRoleOptions = (): SelectOption[] => {
+    return getAvailableRoles().map(role => ({
+      value: role,
+      label: role
+    }));
+  };
+
   const toggleSection = (section: string) => {
     setCollapsedSections(prev => ({
       ...prev,
@@ -251,6 +259,26 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
             flex-wrap: wrap;
           }
           
+          .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+          }
+          
+          .collapsible-content.open {
+            max-height: 2000px;
+            opacity: 1;
+          }
+          
+          .collapse-button {
+            transition: transform 0.2s ease-in-out;
+          }
+          
+          .collapse-button.rotated {
+            transform: rotate(180deg);
+          }
+          
           @media (max-width: 768px) {
             .member-item {
               flex-direction: column;
@@ -297,6 +325,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               <span>Pending Members ({pendingUsers.length})</span>
               <button
                 onClick={() => toggleSection('pending')}
+                className={`collapse-button ${collapsedSections.pending ? '' : 'rotated'}`}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -307,13 +336,13 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 }}
                 aria-label={collapsedSections.pending ? 'Expand section' : 'Collapse section'}
               >
-                {collapsedSections.pending ? '▼' : '▲'}
+                ▼
               </button>
             </div>
           }
           style={{ marginBottom: '2rem' }}
         >
-          {!collapsedSections.pending && (
+          <div className={`collapsible-content ${!collapsedSections.pending ? 'open' : ''}`}>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {pendingUsers.map((user) => (
               <div key={user.uid} className="member-item">
@@ -348,7 +377,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               </div>
               ))}
             </div>
-          )}
+          </div>
         </Card>
       )}
 
@@ -359,6 +388,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
             <span>Active Members ({activeUsers.length})</span>
             <button
               onClick={() => toggleSection('active')}
+              className={`collapse-button ${collapsedSections.active ? '' : 'rotated'}`}
               style={{
                 background: 'none',
                 border: 'none',
@@ -369,13 +399,13 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               }}
               aria-label={collapsedSections.active ? 'Expand section' : 'Collapse section'}
             >
-              {collapsedSections.active ? '▼' : '▲'}
+              ▼
             </button>
           </div>
         }
         style={{ marginBottom: '2rem' }}
       >
-        {!collapsedSections.active && (
+        <div className={`collapsible-content ${!collapsedSections.active ? 'open' : ''}`}>
           <div style={{ display: 'grid', gap: '1rem' }}>
             {activeUsers.map((user) => (
             <div key={user.uid} className="member-item" style={{ backgroundColor: '#fff' }}>
@@ -389,26 +419,15 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 <RoleBadge role={user.USER_ORG_ROLE} size="small" />
               </div>
               <div className="member-buttons" style={{ alignItems: 'center' }}>
-                <select
+                <Select
                   value={user.USER_ORG_ROLE || ''}
-                  onChange={(e) => handleRoleChange(user.uid, e.target.value as UserRole)}
+                  onChange={(value) => handleRoleChange(user.uid, value as UserRole)}
+                  options={[
+                    { value: user.USER_ORG_ROLE || '', label: user.USER_ORG_ROLE || 'Rejected' },
+                    ...getRoleOptions()
+                  ]}
                   disabled={updating === user.uid}
-                  style={{
-                    padding: '0.25rem 0.5rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem',
-                    backgroundColor: updating === user.uid ? '#f8f9fa' : '#fff',
-                    cursor: updating === user.uid ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <option value={user.USER_ORG_ROLE || ''}>{user.USER_ORG_ROLE || 'Rejected'}</option>
-                  {getAvailableRoles().map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
+                />
                 <Button
                   variant="secondary"
                   size="small"
@@ -421,7 +440,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
             </div>
             ))}
           </div>
-        )}
+        </div>
       </Card>
 
       {/* Inactive Members */}
@@ -432,6 +451,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               <span>Inactive Members ({inactiveUsers.length})</span>
               <button
                 onClick={() => toggleSection('inactive')}
+                className={`collapse-button ${collapsedSections.inactive ? '' : 'rotated'}`}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -442,13 +462,13 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 }}
                 aria-label={collapsedSections.inactive ? 'Expand section' : 'Collapse section'}
               >
-                {collapsedSections.inactive ? '▼' : '▲'}
+                ▼
               </button>
             </div>
           }
           style={{ marginBottom: '2rem' }}
         >
-          {!collapsedSections.inactive && (
+          <div className={`collapsible-content ${!collapsedSections.inactive ? 'open' : ''}`}>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {inactiveUsers.map((user) => (
               <div key={user.uid} className="member-item inactive">
@@ -474,7 +494,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               </div>
               ))}
             </div>
-          )}
+          </div>
         </Card>
       )}
 
@@ -486,6 +506,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               <span>Rejected Members ({rejectedUsers.length})</span>
               <button
                 onClick={() => toggleSection('rejected')}
+                className={`collapse-button ${collapsedSections.rejected ? '' : 'rotated'}`}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -496,13 +517,13 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 }}
                 aria-label={collapsedSections.rejected ? 'Expand section' : 'Collapse section'}
               >
-                {collapsedSections.rejected ? '▼' : '▲'}
+                ▼
               </button>
             </div>
           }
           style={{ marginBottom: '2rem' }}
         >
-          {!collapsedSections.rejected && (
+          <div className={`collapsible-content ${!collapsedSections.rejected ? 'open' : ''}`}>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {rejectedUsers.map((user) => (
               <div key={user.uid} className="member-item rejected">
@@ -538,7 +559,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
               </div>
               ))}
             </div>
-          )}
+          </div>
         </Card>
       )}
     </PageContainer>
