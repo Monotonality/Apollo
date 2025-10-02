@@ -1,0 +1,127 @@
+APOLLO DATABASE SCHEMA DOCUMENTATION
+This document outlines the structure (schema) of the Apollo database.
+
+USER
+Column Name Key Type Description
+UID PK Links to Firebase Authentication; unique identifier for a user.
+email N/A User's email address (from Firebase Auth).
+displayName N/A User's display name (auto-generated from first + last name).
+USER_FNAME N/A User's first name.
+USER_LNAME N/A User's last name.
+USER_IS_ACTIVE N/A Indicates if the user account is active (boolean/flag).
+USER_LINKEDIN N/A User's LinkedIn profile information (URL or ID) - defaults to empty.
+USER_ORG_ROLE N/A The user's role within an organization (defaults to 'Pending User', first user gets 'Data & Systems Officer').
+USER_TOTAL_VOL N/A Total number of volunteer hours accrued (defaults to 0).
+USER_CURRENT_VOL N/A Current/active volunteer hours (defaults to 0).
+USER_ATND_TOTAL N/A Total attendance count for the user (defaults to 0).
+USER_IS_ATND_EXEMPT N/A Indicates if the user is exempt from attendance requirements (defaults to false).
+permissions N/A User's permissions based on their role.
+createdAt N/A Timestamp of user creation.
+updatedAt N/A Timestamp of last update.
+lastLoginAt N/A Timestamp of last login (optional).
+
+AUTHENTICATION
+Handled by Firebase Authentication service - no separate table needed.
+SERVES
+Column Name Key Type Description
+UID FK Links to the USER table.
+COMM_ID FK Links to the COMMITTEE table.
+SERVES_JOIN_DATE N/A Date the user joined the committee.
+SERVES_ROLE N/A The user's role in the committee.
+COMMITTEE
+Column Name Key Type Description
+COMM_ID PK Unique identifier for a committee.
+COMM_NAME N/A The name of the committee.
+COMM_DESCRIPTION N/A Detailed description of the committee.
+CHAIR_ID FK ID of the user who chairs the committee.
+COMM_IS_ACTIVE N/A Indicates if the committee is active.
+COMM_TIMESTAMP N/A Timestamp of creation or update.
+FUNDING
+Column Name Key Type Description
+FUND_ID PK Unique identifier for funding record.
+UID FK User involved in funding.
+COMM_ID FK Committee associated with funding.
+FUND_NAME N/A Name of the funding activity.
+FUND_DESC N/A Description of the funding activity.
+FUND_AMT N/A Amount of funding.
+FUND_TIMESTAMP N/A Creation/update timestamp.
+FUND_NEED_BY N/A Date funds are needed by.
+VOLUNTEER
+Column Name Key Type Description
+VOL_ID PK Unique identifier for volunteer opportunity.
+VOL_NAME N/A Name of the opportunity.
+VOL_DESCRIPTION N/A Description of the opportunity.
+VOL_NEEDED N/A Number of volunteers needed.
+VOL_CONFIRMED N/A Number of volunteers confirmed.
+VOL_DATE N/A Date of the opportunity.
+VOL_TIME N/A Time of the opportunity.
+VOL_LOCATION N/A Location of the opportunity.
+VOL_TIMESTAMP N/A Creation/update timestamp.
+VOLUNTEERED
+Column Name Key Type Description
+UID FK Links to the USER table.
+VOL_ID FK Links to the VOLUNTEER table.
+VOL_DATE_REQUESTED N/A Date user requested to volunteer.
+VOL_IS_APPROVED N/A Indicates if request approved.
+VOL_PROOF N/A Reference to proof of completion.
+VOL_TIMESTAMP N/A Creation/update timestamp.
+ATTENDED
+Column Name Key Type Description
+UID FK Links to the USER table.
+ATND_TIME FK Links to the ATTENDANCE table.
+ATNDED_CODE N/A Code used to record attendance.
+ATNDED_IS_VALID N/A Indicates if attendance record is valid.
+ATNDED_TIMESTAMP N/A Creation/update timestamp.
+ATTENDANCE
+Column Name Key Type Description
+ATND_TIMESTAMP PK Unique identifier for attendance event.
+ATND_CODE N/A Unique attendance code.
+ATND_IS_LIVE N/A Indicates if attendance period is open.
+
+IMPLEMENTATION NOTES
+===================
+
+Firebase Collections:
+- USER: 'user' (singular naming convention)
+- SERVES: 'serves'
+- COMMITTEE: 'committee'
+- FUNDING: 'funding'
+- VOLUNTEER: 'volunteer'
+- VOLUNTEERED: 'volunteered'
+- ATTENDED: 'attended'
+- ATTENDANCE: 'attendance'
+
+User Creation Process:
+1. User signs up with: email, password, firstName, lastName
+2. Display name auto-generated: "firstName lastName"
+3. Role assignment:
+   - First user: 'Data & Systems Officer' (full permissions)
+   - All others: 'Pending User' (minimal permissions)
+4. Default values set for all volunteer/attendance fields
+5. LinkedIn field defaults to empty string
+
+Authentication:
+- Handled by Firebase Authentication
+- No separate authentication table needed
+- User profile stored in Firestore USER collection
+- UID from Firebase Auth used as document ID
+
+Role-Based Access Control:
+- 8 user roles with hierarchical permissions
+- Permissions defined in roles.ts utility
+- Role checking functions available for components
+- First user gets administrative access automatically
+
+Data Relationships:
+- Users ↔ SERVES ↔ COMMITTEE (Many-to-Many committee membership)
+- Users ↔ FUNDING ↔ COMMITTEE (Funding requests)
+- Users ↔ VOLUNTEERED ↔ VOLUNTEER (Volunteer participation)
+- Users ↔ ATTENDED ↔ ATTENDANCE (Attendance tracking)
+
+Cleanup Changes Applied:
+- Removed redundant User interface (kept only UserProfile)
+- Consolidated timestamp fields (removed USER_TIMESTAMP)
+- Created shared fallback user function
+- Removed unused fields from UserProfile
+- Standardized collection naming (all singular)
+- Consolidated permission functions

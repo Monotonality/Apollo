@@ -210,10 +210,19 @@
 ## File Structure
 ```
 /
-├── index.html          # Main homepage
-├── styles.css          # Main stylesheet
-├── brand-guide.md      # This reference file
-└── assets/            # Images, icons, etc.
+├── src/
+│   ├── components/     # React components (.tsx)
+│   ├── pages/         # Application pages (.tsx)
+│   ├── services/      # Firebase services (.ts)
+│   ├── types/         # TypeScript definitions (.ts)
+│   ├── utils/         # Utility functions (.ts)
+│   ├── firebase.ts    # Firebase configuration
+│   └── App.tsx        # Main application
+├── public/
+│   └── index.html     # Main homepage
+├── styles.css         # Main stylesheet
+├── brand-guide.md     # This reference file
+└── assets/           # Images, icons, etc.
 ```
 
 ## Notes
@@ -222,3 +231,5 @@
 - Test on multiple devices and browsers
 - Keep design simple and professional
 - Maintain consistent UT Dallas branding throughout
+- Use TypeScript for type safety and better development experience
+- Follow React best practices with functional components and hooks

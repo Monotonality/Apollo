@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admins can read/write all user profiles
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['President', 'Vice President', 'Program Manager', 'Dean', 'Data & Systems Officer'];
+    }
+    
+    // Committees - authenticated users can read, authorized users can write
+    match /committees/{committeeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.manage_committees == true;
+    }
+    
+    // Attendance records
+    match /attendance/{recordId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.create_attendance == true;
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.approve_attendance == true;
+    }
+    
+    // Fund requests
+    match /fund_requests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.approve_funds == true;
+    }
+    
+    // Volunteering opportunities
+    match /volunteering/{opportunityId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.create_volunteering == true;
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.approve_volunteering == true;
+    }
+    
+    // Reports
+    match /reports/{reportId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+  }
+}

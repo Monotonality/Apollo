@@ -6,26 +6,29 @@ Apollo is the internal website for the Undergraduate Dean's Council, providing a
 
 ## Tech Stack
 
-- **Frontend**: React 18, React Router, CSS3
+- **Frontend**: React 18, TypeScript, React Router, CSS3
 - **Backend**: Firebase (Firestore, Auth, Storage)
 - **Development**: Firebase Emulator Suite
-- **Build Tool**: Create React App
+- **Build Tool**: Create React App with TypeScript template
 
 ## Project Structure
 
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── Auth.js         # Authentication component
-│   └── SampleDataButton.js  # Button to add sample data
+│   └── Auth.tsx        # Authentication component
 ├── pages/              # Main application pages
 ├── services/           # Firebase service functions
-│   ├── authService.js  # Authentication operations
-│   └── firestoreService.js  # Firestore operations
+│   ├── authService.ts  # Authentication operations
+│   └── firestoreService.ts  # Firestore operations
 ├── utils/              # Utility functions
-│   └── sampleData.js   # Sample data for testing
-├── firebase.js         # Firebase configuration
-└── App.js             # Main application component
+│   └── roles.ts        # Role definitions and helpers
+├── types/              # TypeScript type definitions
+│   ├── auth.ts         # Authentication types
+│   ├── user.ts         # User and role types
+│   └── firebase.ts     # Firebase types
+├── firebase.ts         # Firebase configuration
+└── App.tsx            # Main application component
 ```
 
 ## Local Development Setup
@@ -56,7 +59,7 @@ src/
 
 ## Firebase Configuration
 
-The application is configured to use Firebase emulators for local development. The configuration is in `src/firebase.js`:
+The application is configured to use Firebase emulators for local development. The configuration is in `src/firebase.ts`:
 
 - **Firestore**: Port 8080
 - **Auth**: Port 9099  
@@ -64,7 +67,7 @@ The application is configured to use Firebase emulators for local development. T
 
 For production deployment, you'll need to:
 1. Create a Firebase project
-2. Update the configuration in `src/firebase.js`
+2. Update the configuration in `src/firebase.ts`
 3. Deploy the application
 
 ## Available Scripts

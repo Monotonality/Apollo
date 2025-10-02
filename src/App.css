@@ -1,0 +1,62 @@
+.App {
+  text-align: center;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* UT Dallas brand colors */
+:root {
+  --utd-orange: #e87500;
+  --utd-green: #154734;
+  --utd-secondary: #5fe0b7;
+  --utd-orange-rgb: 232, 117, 0;
+  --utd-green-rgb: 18, 71, 52;
+  --utd-secondary-rgb: 95, 244, 183;
+  --container-width: 1200px;
+  --section-padding: 3rem;
+  --border-radius: 8px;
+}
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fa;
+}
+
+/* Button styles */
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Form styles */
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--utd-orange);
+  outline-offset: 2px;
+}
