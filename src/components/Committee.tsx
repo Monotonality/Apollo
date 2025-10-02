@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, addDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, where, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../types/firebase';
 import { UserProfile } from '../types/user';
@@ -135,15 +135,21 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
       setError(null);
       setSuccess(null);
 
+      console.log('Attempting to join committee:', committeeId, 'for user:', user.uid);
+
       // Add user to committee in SERVES collection
-      await addDoc(collection(db, COLLECTIONS.SERVES), {
+      const servesData = {
         UID: user.uid,
         COMM_ID: committeeId,
         SERVES_JOIN_DATE: new Date(),
         SERVES_ROLE: 'Member',
         createdAt: new Date(),
         updatedAt: new Date()
-      });
+      };
+
+      console.log('Creating SERVES record with data:', servesData);
+      const docRef = await addDoc(collection(db, COLLECTIONS.SERVES), servesData);
+      console.log('Successfully created SERVES record:', docRef.id);
 
       // Update local state
       setUserCommittees(prev => [...prev, committeeId]);
@@ -153,7 +159,58 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
       setTimeout(() => setSuccess(null), 3000);
     } catch (error: any) {
       console.error('Error joining committee:', error);
-      setError('Failed to join committee. Please try again.');
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      setError(`Failed to join committee: ${error.message || 'Please try again.'}`);
+    } finally {
+      setJoiningCommittee(null);
+    }
+  };
+
+  const handleLeaveCommittee = async (committeeId: string) => {
+    try {
+      setJoiningCommittee(committeeId); // Reuse the same loading state
+      setError(null);
+      setSuccess(null);
+
+      console.log('Attempting to leave committee:', committeeId, 'for user:', user.uid);
+
+      // Find and delete the user's SERVES record for this committee
+      const servesQuery = query(
+        collection(db, COLLECTIONS.SERVES),
+        where('UID', '==', user.uid),
+        where('COMM_ID', '==', committeeId)
+      );
+      
+      const servesSnapshot = await getDocs(servesQuery);
+      console.log('Found SERVES records to delete:', servesSnapshot.docs.length);
+
+      if (servesSnapshot.empty) {
+        throw new Error('No committee membership found to remove');
+      }
+
+      // Delete all SERVES records for this user-committee combination
+      const deletePromises = servesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      console.log('Successfully deleted SERVES records');
+
+      // Update local state
+      setUserCommittees(prev => prev.filter(id => id !== committeeId));
+      setSuccess('Successfully left the committee!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Error leaving committee:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      setError(`Failed to leave committee: ${error.message || 'Please try again.'}`);
     } finally {
       setJoiningCommittee(null);
     }
@@ -214,6 +271,18 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
               <p><strong>Chair:</strong> {getChairName(userCommittee.CHAIR_ID)}</p>
               <p><strong>Vice Chair:</strong> {getViceChairName(userCommittee.VICE_CHAIR_ID)}</p>
               <p><strong>Member Since:</strong> {new Date().toLocaleDateString()}</p>
+              
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e9ecef' }}>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => handleLeaveCommittee(userCommittee.id)}
+                  disabled={joiningCommittee === userCommittee.id}
+                  style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }}
+                >
+                  {joiningCommittee === userCommittee.id ? 'Leaving...' : 'Leave Committee'}
+                </Button>
+              </div>
             </div>
           </Card>
         )}

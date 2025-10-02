@@ -22,9 +22,13 @@ service cloud.firestore {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow create/update/delete for users with manage_committees permission
-      allow create, update, delete: if request.auth != null && 
-        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true;
+      // Allow create for authenticated users (to join committees)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete for users with manage_committees permission OR the user themselves
+      allow update, delete: if request.auth != null && 
+        (get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true ||
+         resource.data.UID == request.auth.uid);
     }
     
     // FUNDING collection
