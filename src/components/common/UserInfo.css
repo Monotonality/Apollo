@@ -102,6 +102,24 @@
   margin: 0.5rem 0;
 }
 
+/* Mobile-only user info (avatar only) */
+.user-info-section.mobile-only {
+  gap: 0;
+  padding: 0.25rem;
+  margin-top: -.05rem;
+}
+
+.user-info-section.mobile-only .user-dropdown {
+  right: 0;
+  left: auto;
+}
+
+.user-info-section.mobile-only .user-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+}
+
 /* Mobile Styles */
 @media (max-width: 768px) {
   .user-info-section {

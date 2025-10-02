@@ -47,6 +47,14 @@ const Header: React.FC<HeaderProps> = ({
     setIsMobileMenuOpen(false);
   };
 
+  // Extract page name from title (e.g., "Apollo Dashboard" -> "Dashboard")
+  const getPageName = (title: string) => {
+    if (title.includes('Apollo ')) {
+      return title.replace('Apollo ', '');
+    }
+    return title;
+  };
+
 
   return (
     <header className="header" style={style}>
@@ -54,20 +62,35 @@ const Header: React.FC<HeaderProps> = ({
         <div className="title-section">
           <Logo size={32} />
           <div>
-            <h1 className="title">{title}</h1>
+            <h1 className="title desktop-title">{title}</h1>
+            <h1 className="title mobile-title">{getPageName(title)}</h1>
             {subtitle && (
               <p className="subtitle">{subtitle}</p>
             )}
           </div>
         </div>
 
-        {/* User Section */}
+        {/* User Section - Hidden on Mobile */}
         {user && (
-          <UserInfo 
-            user={user}
-            onSignOut={onSignOut}
-            showDropdown={true}
-          />
+          <div className="desktop-user-info">
+            <UserInfo 
+              user={user}
+              onSignOut={onSignOut}
+              showDropdown={true}
+            />
+          </div>
+        )}
+
+        {/* Mobile User Avatar */}
+        {user && (
+          <div className="mobile-user-avatar">
+            <UserInfo 
+              user={user}
+              onSignOut={onSignOut}
+              showDropdown={true}
+              mobileOnly={true}
+            />
+          </div>
         )}
 
         {/* Mobile Menu Button */}
@@ -76,7 +99,12 @@ const Header: React.FC<HeaderProps> = ({
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle navigation menu"
         >
-          {isMobileMenuOpen ? '✕' : '☰'}
+          <span className={`hamburger-icon ${isMobileMenuOpen ? 'hidden' : ''}`}>
+            ☰
+          </span>
+          <span className={`close-icon ${isMobileMenuOpen ? 'visible' : ''}`}>
+            ✕
+          </span>
         </button>
 
         {/* Actions */}

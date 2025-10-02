@@ -8,12 +8,14 @@ interface UserInfoProps {
   };
   onSignOut?: () => void;
   showDropdown?: boolean;
+  mobileOnly?: boolean;
 }
 
 const UserInfo: React.FC<UserInfoProps> = ({ 
   user, 
   onSignOut,
-  showDropdown = true 
+  showDropdown = true,
+  mobileOnly = false
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -57,16 +59,18 @@ const UserInfo: React.FC<UserInfoProps> = ({
 
   return (
     <div 
-      className={`user-info-section ${showDropdown ? 'clickable' : ''}`}
+      className={`user-info-section ${showDropdown ? 'clickable' : ''} ${mobileOnly ? 'mobile-only' : ''}`}
       onClick={handleUserSectionClick}
     >
       <div className="user-avatar">
         {getInitials(user.displayName)}
       </div>
-      <div className="user-info">
-        <p className="user-name">{user.displayName}</p>
-        <p className="user-role">{user.role}</p>
-      </div>
+      {!mobileOnly && (
+        <div className="user-info">
+          <p className="user-name">{user.displayName}</p>
+          <p className="user-role">{user.role}</p>
+        </div>
+      )}
       
       {/* User Dropdown */}
       {showDropdown && isDropdownOpen && (
