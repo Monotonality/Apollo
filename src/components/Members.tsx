@@ -278,10 +278,12 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
         onSignOut={onSignOut}
         navItems={[
           { label: 'Dashboard', path: 'dashboard' },
+          ...(currentUser.USER_ORG_ROLE === 'Member' || currentUser.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Committee', path: 'committee' }] : []),
           { label: 'Directory', path: 'directory' },
           { label: 'Profile', path: 'profile' },
           { label: 'About', path: 'about' },
-          ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : [])
+          ...(currentUser.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
+          ...(currentUser.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
         ]}
         currentPath="members"
         onNavigate={onNavigate}

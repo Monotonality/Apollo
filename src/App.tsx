@@ -9,6 +9,8 @@ import Directory from './components/Directory';
 import Profile from './components/Profile';
 import About from './components/About';
 import Members from './components/Members';
+import Committee from './components/Committee';
+import Committees from './components/Committees';
 import Landing from './components/Landing';
 import './App.css';
 
@@ -42,6 +44,10 @@ function App() {
       const path = window.location.pathname;
       if (path === '/dashboard') {
         setCurrentPage('dashboard');
+      } else if (path === '/committee') {
+        setCurrentPage('committee');
+      } else if (path === '/committees') {
+        setCurrentPage('committees');
       } else if (path === '/directory') {
         setCurrentPage('directory');
       } else if (path === '/profile') {
@@ -81,6 +87,10 @@ function App() {
     setCurrentPage(page);
     if (page === 'dashboard') {
       window.history.pushState({}, '', '/dashboard');
+    } else if (page === 'committee') {
+      window.history.pushState({}, '', '/committee');
+    } else if (page === 'committees') {
+      window.history.pushState({}, '', '/committees');
     } else if (page === 'directory') {
       window.history.pushState({}, '', '/directory');
     } else if (page === 'profile') {
@@ -149,6 +159,10 @@ function App() {
     // Show authenticated pages
     if (user) {
       switch (currentPage) {
+        case 'committee':
+          return <Committee user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+        case 'committees':
+          return <Committees user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
         case 'directory':
           return <Directory currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
         case 'profile':

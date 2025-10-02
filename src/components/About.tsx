@@ -22,10 +22,12 @@ const About: React.FC<AboutProps> = ({ user, onSignOut, onNavigate }) => {
         onSignOut={onSignOut}
         navItems={[
           { label: 'Dashboard', path: 'dashboard' },
+          ...(user.USER_ORG_ROLE === 'Member' || user.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Committee', path: 'committee' }] : []),
           { label: 'Directory', path: 'directory' },
           { label: 'Profile', path: 'profile' },
           { label: 'About', path: 'about' },
-          ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : [])
+          ...(user.permissions?.approve_members ? [{ label: 'Members', path: 'members' }] : []),
+          ...(user.permissions?.manage_committees ? [{ label: 'Committees', path: 'committees' }] : [])
         ]}
         currentPath="about"
         onNavigate={onNavigate}

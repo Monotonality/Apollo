@@ -105,6 +105,16 @@
   color: white;
 }
 
+.nav-item.committees-nav {
+  color: #e87500; /* Orange text when inactive */
+}
+
+.nav-item.active.committees-nav {
+  background-color: #e87500; /* Orange background when active */
+  color: white;
+}
+
+
 .mobile-menu-button {
   display: none;
   background: none;
@@ -209,6 +219,16 @@
   color: white;
 }
 
+.mobile-nav-item.committees-nav {
+  color: #e87500; /* Orange text when inactive */
+}
+
+.mobile-nav-item.active.committees-nav {
+  background-color: #e87500; /* Orange background when active */
+  color: white;
+}
+
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -229,7 +249,7 @@
   .mobile-menu-button {
     display: block;
     position: absolute;
-    right: 3rem;
+    right: 2.5rem;
     top: 50%;
     transform: translateY(-50%) !important;
     z-index: 10;

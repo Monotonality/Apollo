@@ -166,7 +166,7 @@ const Header: React.FC<HeaderProps> = ({
           {navItems.map((item) => (
             <button
               key={item.path}
-              className={`nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''}`}
+              className={`nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''} ${item.label === 'Committees' ? 'committees-nav' : ''}`}
               onClick={() => handleNavClick(item.path)}
             >
               {item.label}
@@ -180,7 +180,7 @@ const Header: React.FC<HeaderProps> = ({
             {navItems.map((item) => (
               <button
                 key={item.path}
-                className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''}`}
+                className={`mobile-nav-item ${currentPath === item.path ? 'active' : ''} ${item.label === 'Members' ? 'members-nav' : ''} ${item.label === 'Committees' ? 'committees-nav' : ''}`}
                 onClick={() => handleNavClick(item.path)}
               >
                 {item.label}
