@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, doc, updateDoc, deleteDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../types/firebase';
 import { UserProfile } from '../types/user';
-import { Committee } from '../types/firebase';
+import { Committee as CommitteeType } from '../types/firebase';
 import PageContainer from './common/PageContainer';
 import Header from './common/Header';
 import Card from './common/Card';
@@ -18,13 +18,14 @@ interface CommitteesProps {
 
 const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) => {
   const [members, setMembers] = useState<UserProfile[]>([]);
-  const [committees, setCommittees] = useState<Committee[]>([]);
+  const [committees, setCommittees] = useState<CommitteeType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatingCommittee, setUpdatingCommittee] = useState<string | null>(null);
+  const [deletingCommittee, setDeletingCommittee] = useState<string | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({
     active: true,
     inactive: true
@@ -32,7 +33,8 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    chair: ''
+    chair: '',
+    viceChair: ''
   });
 
   useEffect(() => {
@@ -87,7 +89,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
       const q = query(committeesRef, orderBy('COMM_NAME', 'asc'));
       const querySnapshot = await getDocs(q);
       
-      const committeesList: Committee[] = [];
+      const committeesList: CommitteeType[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const committee = {
@@ -95,12 +97,13 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
           COMM_ID: doc.id,
           COMM_NAME: data.COMM_NAME || '',
           COMM_DESCRIPTION: data.COMM_DESCRIPTION || '',
-          CHAIR_ID: data.CHAIR_ID || '',
+          CHAIR_ID: data.CHAIR_ID || null,
+          VICE_CHAIR_ID: data.VICE_CHAIR_ID || null,
           COMM_IS_ACTIVE: data.COMM_IS_ACTIVE || false,
           COMM_TIMESTAMP: data.COMM_TIMESTAMP?.toDate() || new Date(),
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Committee;
+        } as CommitteeType;
         committeesList.push(committee);
       });
       
@@ -138,6 +141,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
         COMM_NAME: formData.name.trim(),
         COMM_DESCRIPTION: formData.description.trim(),
         CHAIR_ID: formData.chair,
+        VICE_CHAIR_ID: formData.viceChair || null,
         COMM_IS_ACTIVE: true,
         COMM_TIMESTAMP: new Date(),
         createdAt: new Date(),
@@ -145,6 +149,34 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.COMMITTEE), committeeData);
+      
+      // Create SERVES record for the chair if chair is selected
+      if (formData.chair) {
+        const servesData = {
+          UID: formData.chair,
+          COMM_ID: docRef.id,
+          SERVES_JOIN_DATE: new Date(),
+          SERVES_ROLE: 'Chair',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await addDoc(collection(db, COLLECTIONS.SERVES), servesData);
+      }
+
+      // Create SERVES record for the vice chair if vice chair is selected
+      if (formData.viceChair) {
+        const viceChairServesData = {
+          UID: formData.viceChair,
+          COMM_ID: docRef.id,
+          SERVES_JOIN_DATE: new Date(),
+          SERVES_ROLE: 'Vice Chair',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await addDoc(collection(db, COLLECTIONS.SERVES), viceChairServesData);
+      }
       
       setSuccess(`Committee "${formData.name}" has been created successfully!`);
       resetForm();
@@ -164,7 +196,8 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
     setFormData({
       name: '',
       description: '',
-      chair: ''
+      chair: '',
+      viceChair: ''
     });
     setIsCreating(false);
     setError(null);
@@ -186,6 +219,37 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
       // Convert empty string to null for database storage
       const chairIdToStore = newChairId === '' ? null : newChairId;
       
+      // Get current committee to find old chair
+      const currentCommittee = committees.find(c => c.id === committeeId);
+      const oldChairId = currentCommittee?.CHAIR_ID;
+      
+      // Delete old chair's SERVES record if exists
+      if (oldChairId) {
+        const oldServesQuery = query(
+          collection(db, COLLECTIONS.SERVES),
+          where('UID', '==', oldChairId),
+          where('COMM_ID', '==', committeeId),
+          where('SERVES_ROLE', '==', 'Chair')
+        );
+        const oldServesSnapshot = await getDocs(oldServesQuery);
+        const deleteOldServesPromises = oldServesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deleteOldServesPromises);
+      }
+      
+      // Create new chair's SERVES record if new chair selected
+      if (chairIdToStore) {
+        const newServesData = {
+          UID: chairIdToStore,
+          COMM_ID: committeeId,
+          SERVES_JOIN_DATE: new Date(),
+          SERVES_ROLE: 'Chair',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        await addDoc(collection(db, COLLECTIONS.SERVES), newServesData);
+      }
+      
+      // Update committee document
       await updateDoc(committeeRef, {
         CHAIR_ID: chairIdToStore,
         updatedAt: new Date()
@@ -207,12 +271,77 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
     }
   };
 
+  const handleViceChairChange = async (committeeId: string, newViceChairId: string) => {
+    try {
+      setUpdatingCommittee(committeeId);
+      const committeeRef = doc(db, COLLECTIONS.COMMITTEE, committeeId);
+      
+      // Convert empty string to null for database storage
+      const viceChairIdToStore = newViceChairId === '' ? null : newViceChairId;
+      
+      // Get current committee to find old vice chair
+      const currentCommittee = committees.find(c => c.id === committeeId);
+      const oldViceChairId = currentCommittee?.VICE_CHAIR_ID;
+      
+      // Delete old vice chair's SERVES record if exists
+      if (oldViceChairId) {
+        const oldServesQuery = query(
+          collection(db, COLLECTIONS.SERVES),
+          where('UID', '==', oldViceChairId),
+          where('COMM_ID', '==', committeeId),
+          where('SERVES_ROLE', '==', 'Vice Chair')
+        );
+        const oldServesSnapshot = await getDocs(oldServesQuery);
+        const deleteOldServesPromises = oldServesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deleteOldServesPromises);
+      }
+      
+      // Create new vice chair's SERVES record if new vice chair selected
+      if (viceChairIdToStore) {
+        const newServesData = {
+          UID: viceChairIdToStore,
+          COMM_ID: committeeId,
+          SERVES_JOIN_DATE: new Date(),
+          SERVES_ROLE: 'Vice Chair',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        await addDoc(collection(db, COLLECTIONS.SERVES), newServesData);
+      }
+      
+      // Update committee document
+      await updateDoc(committeeRef, {
+        VICE_CHAIR_ID: viceChairIdToStore,
+        updatedAt: new Date()
+      });
+      
+      // Update local state
+      setCommittees(prevCommittees => 
+        prevCommittees.map(committee => 
+          committee.id === committeeId 
+            ? { ...committee, VICE_CHAIR_ID: viceChairIdToStore, updatedAt: new Date() }
+            : committee
+        )
+      );
+    } catch (error: any) {
+      console.error('Error updating committee vice chair:', error);
+      setError('Failed to update committee vice chair. Please try again.');
+    } finally {
+      setUpdatingCommittee(null);
+    }
+  };
+
   const handleActiveStatusChange = async (committeeId: string, isActive: boolean) => {
     try {
       setUpdatingCommittee(committeeId);
       const committeeRef = doc(db, COLLECTIONS.COMMITTEE, committeeId);
       
-      // If setting to inactive, remove the chair
+      // Get current committee to find current chair and vice chair
+      const currentCommittee = committees.find(c => c.id === committeeId);
+      const currentChairId = currentCommittee?.CHAIR_ID;
+      const currentViceChairId = currentCommittee?.VICE_CHAIR_ID;
+      
+      // If setting to inactive, remove the chair and vice chair and delete their SERVES records
       const updateData: any = {
         COMM_IS_ACTIVE: isActive,
         updatedAt: new Date()
@@ -220,6 +349,33 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
       
       if (!isActive) {
         updateData.CHAIR_ID = null;
+        updateData.VICE_CHAIR_ID = null;
+        
+        // Delete chair's SERVES record if exists
+        if (currentChairId) {
+          const chairServesQuery = query(
+            collection(db, COLLECTIONS.SERVES),
+            where('UID', '==', currentChairId),
+            where('COMM_ID', '==', committeeId),
+            where('SERVES_ROLE', '==', 'Chair')
+          );
+          const chairServesSnapshot = await getDocs(chairServesQuery);
+          const deleteChairServesPromises = chairServesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+          await Promise.all(deleteChairServesPromises);
+        }
+        
+        // Delete vice chair's SERVES record if exists
+        if (currentViceChairId) {
+          const viceChairServesQuery = query(
+            collection(db, COLLECTIONS.SERVES),
+            where('UID', '==', currentViceChairId),
+            where('COMM_ID', '==', committeeId),
+            where('SERVES_ROLE', '==', 'Vice Chair')
+          );
+          const viceChairServesSnapshot = await getDocs(viceChairServesQuery);
+          const deleteViceChairServesPromises = viceChairServesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+          await Promise.all(deleteViceChairServesPromises);
+        }
       }
       
       await updateDoc(committeeRef, updateData);
@@ -232,6 +388,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 ...committee, 
                 COMM_IS_ACTIVE: isActive, 
                 CHAIR_ID: !isActive ? null : committee.CHAIR_ID,
+                VICE_CHAIR_ID: !isActive ? null : committee.VICE_CHAIR_ID,
                 updatedAt: new Date() 
               }
             : committee
@@ -250,6 +407,12 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
     return chair ? `${chair.USER_FNAME} ${chair.USER_LNAME}` : 'Unknown';
   };
 
+  const getViceChairName = (viceChairId: string | null) => {
+    if (!viceChairId) return 'No vice chair assigned';
+    const viceChair = members.find(member => member.uid === viceChairId);
+    return viceChair ? `${viceChair.USER_FNAME} ${viceChair.USER_LNAME}` : 'Unknown';
+  };
+
   const getMemberOptions = (): SelectOption[] => {
     return [
       { value: '', label: 'None' },
@@ -258,6 +421,45 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
         label: `${member.USER_FNAME} ${member.USER_LNAME}`
       }))
     ];
+  };
+
+  const handleDeleteCommittee = async (committeeId: string) => {
+    if (!window.confirm('Are you sure you want to delete this committee? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setDeletingCommittee(committeeId);
+      setError(null);
+      setSuccess(null);
+
+      // First, delete all SERVES records for this committee
+      const servesRef = collection(db, COLLECTIONS.SERVES);
+      const servesQuery = query(servesRef, where('COMM_ID', '==', committeeId));
+      const servesSnapshot = await getDocs(servesQuery);
+      
+      const deleteServesPromises = servesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deleteServesPromises);
+
+      // Then, delete the committee document
+      const committeeRef = doc(db, COLLECTIONS.COMMITTEE, committeeId);
+      await deleteDoc(committeeRef);
+
+      // Update local state
+      setCommittees(prevCommittees => 
+        prevCommittees.filter(committee => committee.id !== committeeId)
+      );
+
+      setSuccess('Committee deleted successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Error deleting committee:', error);
+      setError('Failed to delete committee. Please try again.');
+    } finally {
+      setDeletingCommittee(null);
+    }
   };
 
   return (
@@ -467,7 +669,32 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
               )}
             </div>
 
-
+            {/* Vice Chair Selection */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#154734' }}>
+                Committee Vice Chair
+              </label>
+              <select
+                name="viceChair"
+                value={formData.viceChair}
+                onChange={handleInputChange}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '1rem',
+                  backgroundColor: '#fff'
+                }}
+              >
+                <option value="">Select a vice chair from active members (optional)</option>
+                {members.map((member) => (
+                  <option key={member.uid} value={member.uid}>
+                    {member.USER_FNAME} {member.USER_LNAME} ({member.email})
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Form Actions */}
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
@@ -533,17 +760,34 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                         <strong>Chair:</strong> {getChairName(committee.CHAIR_ID)}
                       </p>
                     )}
+                    {committee.VICE_CHAIR_ID && (
+                      <p style={{ margin: '0 0 0.25rem 0', color: '#666', fontSize: '0.875rem', textAlign: 'left' }}>
+                        <strong>Vice Chair:</strong> {getViceChairName(committee.VICE_CHAIR_ID)}
+                      </p>
+                    )}
                     <p style={{ margin: '0', color: '#999', fontSize: '0.75rem', textAlign: 'left' }}>
                       Created: {committee.createdAt.toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="member-buttons" style={{ alignItems: 'center' }}>
-                    <Select
-                      value={committee.CHAIR_ID || ''}
-                      onChange={(value) => handleChairChange(committee.id, value)}
-                      options={getMemberOptions()}
-                      disabled={updatingCommittee === committee.id}
-                    />
+                  <div className="member-buttons" style={{ alignItems: 'center', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#666', fontWeight: 'bold' }}>Chair:</label>
+                      <Select
+                        value={committee.CHAIR_ID || ''}
+                        onChange={(value) => handleChairChange(committee.id, value)}
+                        options={getMemberOptions()}
+                        disabled={updatingCommittee === committee.id}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#666', fontWeight: 'bold' }}>Vice Chair:</label>
+                      <Select
+                        value={committee.VICE_CHAIR_ID || ''}
+                        onChange={(value) => handleViceChairChange(committee.id, value)}
+                        options={getMemberOptions()}
+                        disabled={updatingCommittee === committee.id}
+                      />
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="checkbox"
@@ -605,17 +849,34 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                         <strong>Chair:</strong> {getChairName(committee.CHAIR_ID)}
                       </p>
                     )}
+                    {committee.VICE_CHAIR_ID && (
+                      <p style={{ margin: '0 0 0.25rem 0', color: '#999', fontSize: '0.875rem', textAlign: 'left' }}>
+                        <strong>Vice Chair:</strong> {getViceChairName(committee.VICE_CHAIR_ID)}
+                      </p>
+                    )}
                     <p style={{ margin: '0', color: '#ccc', fontSize: '0.75rem', textAlign: 'left' }}>
                       Created: {committee.createdAt.toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="member-buttons" style={{ alignItems: 'center' }}>
-                    <Select
-                      value={committee.CHAIR_ID || ''}
-                      onChange={(value) => handleChairChange(committee.id, value)}
-                      options={getMemberOptions()}
-                      disabled={true}
-                    />
+                  <div className="member-buttons" style={{ alignItems: 'center', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#999', fontWeight: 'bold' }}>Chair:</label>
+                      <Select
+                        value={committee.CHAIR_ID || ''}
+                        onChange={(value) => handleChairChange(committee.id, value)}
+                        options={getMemberOptions()}
+                        disabled={true}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#999', fontWeight: 'bold' }}>Vice Chair:</label>
+                      <Select
+                        value={committee.VICE_CHAIR_ID || ''}
+                        onChange={(value) => handleViceChairChange(committee.id, value)}
+                        options={getMemberOptions()}
+                        disabled={true}
+                      />
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="checkbox"
@@ -628,6 +889,15 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                         Active
                       </label>
                     </div>
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => handleDeleteCommittee(committee.id)}
+                      disabled={deletingCommittee === committee.id}
+                      style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }}
+                    >
+                      {deletingCommittee === committee.id ? 'Deleting...' : 'Delete'}
+                    </Button>
                   </div>
                 </div>
               ))}

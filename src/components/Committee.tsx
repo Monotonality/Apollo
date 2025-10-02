@@ -55,6 +55,7 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
           COMM_NAME: data.COMM_NAME || '',
           COMM_DESCRIPTION: data.COMM_DESCRIPTION || '',
           CHAIR_ID: data.CHAIR_ID || null,
+          VICE_CHAIR_ID: data.VICE_CHAIR_ID || null,
           COMM_IS_ACTIVE: data.COMM_IS_ACTIVE || false,
           COMM_TIMESTAMP: data.COMM_TIMESTAMP?.toDate() || new Date(),
           createdAt: data.createdAt?.toDate() || new Date(),
@@ -165,6 +166,12 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
     return chair ? `${chair.USER_FNAME} ${chair.USER_LNAME}` : 'Unknown';
   };
 
+  const getViceChairName = (viceChairId: string | null) => {
+    if (!viceChairId) return 'No vice chair assigned';
+    const viceChair = members.find(member => member.uid === viceChairId);
+    return viceChair ? `${viceChair.USER_FNAME} ${viceChair.USER_LNAME}` : 'Unknown';
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -205,6 +212,7 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
             <div style={{ lineHeight: '1.6' }}>
               <p><strong>Description:</strong> {userCommittee.COMM_DESCRIPTION}</p>
               <p><strong>Chair:</strong> {getChairName(userCommittee.CHAIR_ID)}</p>
+              <p><strong>Vice Chair:</strong> {getViceChairName(userCommittee.VICE_CHAIR_ID)}</p>
               <p><strong>Member Since:</strong> {new Date().toLocaleDateString()}</p>
             </div>
           </Card>
@@ -318,6 +326,11 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
                   {committee.CHAIR_ID && (
                     <p style={{ margin: '0 0 0.25rem 0', color: '#666', fontSize: '0.875rem', textAlign: 'left' }}>
                       <strong>Chair:</strong> {getChairName(committee.CHAIR_ID)}
+                    </p>
+                  )}
+                  {committee.VICE_CHAIR_ID && (
+                    <p style={{ margin: '0 0 0.25rem 0', color: '#666', fontSize: '0.875rem', textAlign: 'left' }}>
+                      <strong>Vice Chair:</strong> {getViceChairName(committee.VICE_CHAIR_ID)}
                     </p>
                   )}
                   <p style={{ margin: '0', color: '#999', fontSize: '0.75rem', textAlign: 'left' }}>
