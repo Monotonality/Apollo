@@ -108,7 +108,7 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         user.USER_FNAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.USER_LNAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.USER_ORG_ROLE.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.USER_ORG_ROLE || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
       
       // Maintain active/inactive separation even in search results
@@ -159,7 +159,7 @@ const Directory: React.FC<DirectoryProps> = ({ currentUser, onSignOut, onNavigat
         title="Member Directory"
         user={{
           displayName: currentUser.displayName,
-          role: currentUser.USER_ORG_ROLE
+          role: currentUser.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
         navItems={[

@@ -2,7 +2,7 @@ import React from 'react';
 import { UserRole } from '../../types/auth';
 
 interface RoleBadgeProps {
-  role: UserRole;
+  role: UserRole | null;
   size?: 'small' | 'medium' | 'large';
   style?: React.CSSProperties;
 }
@@ -12,7 +12,11 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({
   size = 'medium',
   style = {}
 }) => {
-  const getRoleColor = (role: UserRole): string => {
+  const getRoleColor = (role: UserRole | null): string => {
+    if (role === null) {
+      return '#dc3545'; // Red for rejected users
+    }
+    
     const roleColors: { [key in UserRole]: string } = {
       'Data & Systems Officer': '#dc3545',
       'Dean': '#6f42c1',
@@ -59,7 +63,7 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({
 
   return (
     <span style={badgeStyles}>
-      {role}
+      {role === null ? 'Rejected' : role}
     </span>
   );
 };

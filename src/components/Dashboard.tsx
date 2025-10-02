@@ -15,7 +15,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate }) =>
         title="Apollo Dashboard"
         user={{
           displayName: user.displayName,
-          role: user.USER_ORG_ROLE
+          role: user.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
         navItems={[

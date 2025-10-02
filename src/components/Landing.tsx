@@ -222,6 +222,20 @@ const Landing: React.FC<LandingProps> = ({ onNavigate }) => {
               display: block;
               margin: 0;
             }
+            
+            @media (max-width: 768px) {
+              .apollo-text {
+                font-size: 4rem;
+                letter-spacing: 0.1rem;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .apollo-text {
+                font-size: 3rem;
+                letter-spacing: 0.05rem;
+              }
+            }
 
             @keyframes fadeInUp {
               0% {

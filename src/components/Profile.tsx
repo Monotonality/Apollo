@@ -253,7 +253,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSignOut, onNavigate }) => {
         title="Profile"
         user={{
           displayName: user.displayName,
-          role: user.USER_ORG_ROLE
+          role: user.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
         navItems={[

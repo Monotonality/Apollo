@@ -17,7 +17,7 @@ const About: React.FC<AboutProps> = ({ user, onSignOut, onNavigate }) => {
         title="About Apollo"
         user={{
           displayName: user.displayName,
-          role: user.USER_ORG_ROLE
+          role: user.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
         navItems={[

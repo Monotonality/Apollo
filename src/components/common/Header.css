@@ -28,6 +28,14 @@
   min-width: 200px;
 }
 
+/* Hide logo on very small screens */
+@media (max-width: 432px) {
+  .title-section img,
+  .title-section svg {
+    display: none !important;
+  }
+}
+
 
 .title {
   color: #154734;

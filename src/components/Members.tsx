@@ -23,6 +23,12 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({
+    pending: true,
+    active: true,
+    inactive: true,
+    rejected: true
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -46,7 +52,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
           USER_LNAME: data.USER_LNAME || '',
           USER_IS_ACTIVE: data.USER_IS_ACTIVE || false,
           USER_LINKEDIN: data.USER_LINKEDIN || '',
-          USER_ORG_ROLE: data.USER_ORG_ROLE || 'Pending User',
+          USER_ORG_ROLE: data.USER_ORG_ROLE ?? 'Pending User',
           USER_TOTAL_VOL: data.USER_TOTAL_VOL || 0,
           USER_CURRENT_VOL: data.USER_CURRENT_VOL || 0,
           USER_ATND_TOTAL: data.USER_ATND_TOTAL || 0,
@@ -74,10 +80,12 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
       
       // Determine if user should be active based on role
       const shouldBeActive = newRole !== 'Inactive Member';
+      const newPermissions = getPermissionsForRole(newRole);
       
       await updateDoc(userRef, {
         USER_ORG_ROLE: newRole,
         USER_IS_ACTIVE: shouldBeActive,
+        permissions: newPermissions,
         updatedAt: new Date()
       });
       
@@ -85,7 +93,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.uid === userId 
-            ? { ...user, USER_ORG_ROLE: newRole, USER_IS_ACTIVE: shouldBeActive }
+            ? { ...user, USER_ORG_ROLE: newRole, USER_IS_ACTIVE: shouldBeActive, permissions: newPermissions as any }
             : user
         )
       );
@@ -100,10 +108,12 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
     try {
       setUpdating(userId);
       const userRef = doc(db, COLLECTIONS.USER, userId);
+      const newPermissions = getPermissionsForRole('Member');
       
       await updateDoc(userRef, {
         USER_ORG_ROLE: 'Member',
         USER_IS_ACTIVE: true,
+        permissions: newPermissions,
         updatedAt: new Date()
       });
       
@@ -111,7 +121,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.uid === userId 
-            ? { ...user, USER_ORG_ROLE: 'Member', USER_IS_ACTIVE: true }
+            ? { ...user, USER_ORG_ROLE: 'Member', USER_IS_ACTIVE: true, permissions: newPermissions as any }
             : user
         )
       );
@@ -126,8 +136,11 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
     try {
       setUpdating(userId);
       const userRef = doc(db, COLLECTIONS.USER, userId);
+      const newPermissions = getPermissionsForRole(newRole);
+      
       await updateDoc(userRef, {
         USER_ORG_ROLE: newRole,
+        permissions: newPermissions,
         updatedAt: new Date()
       });
       
@@ -135,7 +148,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.uid === userId 
-            ? { ...user, USER_ORG_ROLE: newRole }
+            ? { ...user, USER_ORG_ROLE: newRole, permissions: newPermissions as any }
             : user
         )
       );
@@ -150,17 +163,24 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
     try {
       setUpdating(userId);
       
-      // Update user to rejected status (null role)
+      // Update user to rejected status (null role) with no permissions
       const userRef = doc(db, COLLECTIONS.USER, userId);
+      const emptyPermissions = ROLE_DEFINITIONS['Pending User'].permissions; // No permissions for rejected users
+      
       await updateDoc(userRef, {
         USER_ORG_ROLE: null,
         USER_IS_ACTIVE: false,
+        permissions: emptyPermissions,
         updatedAt: new Date()
       });
       
-      // Update local state by removing the user from pending list
+      // Update local state to mark user as rejected
       setUsers(prevUsers => 
-        prevUsers.filter(user => user.uid !== userId)
+        prevUsers.map(user => 
+          user.uid === userId 
+            ? { ...user, USER_ORG_ROLE: null, USER_IS_ACTIVE: false, permissions: emptyPermissions as any }
+            : user
+        )
       );
     } catch (error) {
       console.error('Error rejecting user:', error);
@@ -179,9 +199,21 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
       .sort((a, b) => ROLE_DEFINITIONS[b].priority - ROLE_DEFINITIONS[a].priority);
   };
 
+  const getPermissionsForRole = (role: UserRole): any => {
+    return ROLE_DEFINITIONS[role]?.permissions || ROLE_DEFINITIONS['Member'].permissions;
+  };
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   const pendingUsers = users.filter(user => user.USER_ORG_ROLE === 'Pending User');
-  const activeUsers = users.filter(user => user.USER_ORG_ROLE !== 'Pending User' && user.USER_IS_ACTIVE);
-  const inactiveUsers = users.filter(user => user.USER_ORG_ROLE !== 'Pending User' && !user.USER_IS_ACTIVE);
+  const activeUsers = users.filter(user => user.USER_ORG_ROLE !== 'Pending User' && user.USER_ORG_ROLE !== null && user.USER_IS_ACTIVE);
+  const inactiveUsers = users.filter(user => user.USER_ORG_ROLE !== 'Pending User' && user.USER_ORG_ROLE !== null && !user.USER_IS_ACTIVE);
+  const rejectedUsers = users.filter(user => user.USER_ORG_ROLE === null);
 
   if (loading) {
     return (
@@ -193,11 +225,55 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
 
   return (
     <PageContainer>
+      <style>
+        {`
+          .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+          }
+          
+          .member-item.inactive {
+            opacity: 0.7;
+          }
+          
+          .member-item.rejected {
+            opacity: 0.5;
+          }
+          
+          .member-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+          }
+          
+          @media (max-width: 768px) {
+            .member-item {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 1rem;
+            }
+            
+            .member-buttons {
+              justify-content: center;
+            }
+            
+            .member-buttons button {
+              flex: 1;
+              min-width: 120px;
+            }
+          }
+        `}
+      </style>
       <Header
         title="Member Management"
         user={{
           displayName: currentUser.displayName,
-          role: currentUser.USER_ORG_ROLE
+          role: currentUser.USER_ORG_ROLE || 'Member'
         }}
         onSignOut={onSignOut}
         navItems={[
@@ -213,18 +289,32 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
 
       {/* Pending Members */}
       {pendingUsers.length > 0 && (
-        <Card title="Pending Members" style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {pendingUsers.map((user) => (
-              <div key={user.uid} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem',
-                border: '1px solid #e9ecef',
-                borderRadius: '8px',
-                backgroundColor: '#f8f9fa'
-              }}>
+        <Card 
+          title={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <span>Pending Members ({pendingUsers.length})</span>
+              <button
+                onClick={() => toggleSection('pending')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0.25rem'
+                }}
+                aria-label={collapsedSections.pending ? 'Expand section' : 'Collapse section'}
+              >
+                {collapsedSections.pending ? '▼' : '▲'}
+              </button>
+            </div>
+          }
+          style={{ marginBottom: '2rem' }}
+        >
+          {!collapsedSections.pending && (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {pendingUsers.map((user) => (
+              <div key={user.uid} className="member-item">
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#154734' }}>
                     {user.USER_FNAME} {user.USER_LNAME}
@@ -234,7 +324,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                   </p>
                   <RoleBadge role={user.USER_ORG_ROLE} size="small" />
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="member-buttons">
                   <Button
                     variant="primary"
                     size="small"
@@ -254,24 +344,39 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 
       {/* Active Members */}
-      <Card title="Active Members" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {activeUsers.map((user) => (
-            <div key={user.uid} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              backgroundColor: '#fff'
-            }}>
+      <Card 
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <span>Active Members ({activeUsers.length})</span>
+            <button
+              onClick={() => toggleSection('active')}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                color: '#666',
+                padding: '0.25rem'
+              }}
+              aria-label={collapsedSections.active ? 'Expand section' : 'Collapse section'}
+            >
+              {collapsedSections.active ? '▼' : '▲'}
+            </button>
+          </div>
+        }
+        style={{ marginBottom: '2rem' }}
+      >
+        {!collapsedSections.active && (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {activeUsers.map((user) => (
+            <div key={user.uid} className="member-item" style={{ backgroundColor: '#fff' }}>
               <div>
                 <h4 style={{ margin: '0 0 0.5rem 0', color: '#154734' }}>
                   {user.USER_FNAME} {user.USER_LNAME}
@@ -281,9 +386,9 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 </p>
                 <RoleBadge role={user.USER_ORG_ROLE} size="small" />
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <div className="member-buttons" style={{ alignItems: 'center' }}>
                 <select
-                  value={user.USER_ORG_ROLE}
+                  value={user.USER_ORG_ROLE || ''}
                   onChange={(e) => handleRoleChange(user.uid, e.target.value as UserRole)}
                   disabled={updating === user.uid}
                   style={{
@@ -295,7 +400,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                     cursor: updating === user.uid ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  <option value={user.USER_ORG_ROLE}>{user.USER_ORG_ROLE}</option>
+                  <option value={user.USER_ORG_ROLE || ''}>{user.USER_ORG_ROLE || 'Rejected'}</option>
                   {getAvailableRoles().map((role) => (
                     <option key={role} value={role}>
                       {role}
@@ -312,25 +417,39 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                 </Button>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Inactive Members */}
       {inactiveUsers.length > 0 && (
-        <Card title="Inactive Members" style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {inactiveUsers.map((user) => (
-              <div key={user.uid} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem',
-                border: '1px solid #e9ecef',
-                borderRadius: '8px',
-                backgroundColor: '#f8f9fa',
-                opacity: 0.7
-              }}>
+        <Card 
+          title={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <span>Inactive Members ({inactiveUsers.length})</span>
+              <button
+                onClick={() => toggleSection('inactive')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0.25rem'
+                }}
+                aria-label={collapsedSections.inactive ? 'Expand section' : 'Collapse section'}
+              >
+                {collapsedSections.inactive ? '▼' : '▲'}
+              </button>
+            </div>
+          }
+          style={{ marginBottom: '2rem' }}
+        >
+          {!collapsedSections.inactive && (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {inactiveUsers.map((user) => (
+              <div key={user.uid} className="member-item inactive">
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#666' }}>
                     {user.USER_FNAME} {user.USER_LNAME}
@@ -340,7 +459,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                   </p>
                   <RoleBadge role={user.USER_ORG_ROLE} size="small" />
                 </div>
-                <div>
+                <div className="member-buttons">
                   <Button
                     variant="primary"
                     size="small"
@@ -351,8 +470,73 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Rejected Members */}
+      {rejectedUsers.length > 0 && (
+        <Card 
+          title={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <span>Rejected Members ({rejectedUsers.length})</span>
+              <button
+                onClick={() => toggleSection('rejected')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0.25rem'
+                }}
+                aria-label={collapsedSections.rejected ? 'Expand section' : 'Collapse section'}
+              >
+                {collapsedSections.rejected ? '▼' : '▲'}
+              </button>
+            </div>
+          }
+          style={{ marginBottom: '2rem' }}
+        >
+          {!collapsedSections.rejected && (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {rejectedUsers.map((user) => (
+              <div key={user.uid} className="member-item rejected">
+                <div>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#999' }}>
+                    {user.USER_FNAME} {user.USER_LNAME}
+                  </h4>
+                  <p style={{ margin: '0 0 0.25rem 0', color: '#ccc' }}>
+                    {user.email}
+                  </p>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: '500'
+                  }}>
+                    Rejected
+                  </div>
+                </div>
+                <div className="member-buttons">
+                  <Button
+                    variant="primary"
+                    size="small"
+                    onClick={() => handleApproveMember(user.uid, 'Member')}
+                    disabled={updating === user.uid}
+                  >
+                    {updating === user.uid ? 'Approving...' : 'Approve as Member'}
+                  </Button>
+                </div>
+              </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
     </PageContainer>
