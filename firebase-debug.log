@@ -162,3 +162,9 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 [debug] [2025-10-02T11:38:12.496Z] <<< [apiv2][status] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules 200
 [debug] [2025-10-02T11:38:12.496Z] <<< [apiv2][body] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules {}
 [info] +  firestore: Rules updated. 
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-10-02T11:39:37.292Z] >>> [apiv2][query] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules [none]
+[debug] [2025-10-02T11:39:37.292Z] >>> [apiv2][body] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\r\nservice cloud.firestore {\r\n  match /databases/{database}/documents {\r\n    // USER collection - simplified rules for debugging\r\n    match /user/{userId} {\r\n      // Allow authenticated users to read/write user profiles (temporary for debugging)\r\n      allow read, write: if request.auth != null;\r\n    }\r\n  }\r\n}\r\n"}]}}
+[debug] [2025-10-02T11:39:37.298Z] <<< [apiv2][status] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules 200
+[debug] [2025-10-02T11:39:37.298Z] <<< [apiv2][body] PUT http://127.0.0.1:8081/emulator/v1/projects/demo-no-project:securityRules {}
+[info] +  firestore: Rules updated. 

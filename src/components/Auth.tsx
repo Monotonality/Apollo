@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { signIn, createUser } from '../services/authService';
 import { CreateUserData } from '../types/user';
+import { PageContainer, Header, Card, Input, Button, LoadingSpinner } from './common';
 
 interface AuthProps {
   onAuthSuccess: () => void;
@@ -61,30 +62,29 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div style={{ 
-      maxWidth: '400px', 
-      margin: '2rem auto', 
-      padding: '2rem',
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      backgroundColor: '#f9f9f9'
+    <PageContainer style={{ 
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh'
     }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: '#154734' }}>
-        {isSignUp ? 'Create Account' : 'Sign In'}
-      </h2>
-
-      {error && (
-        <div style={{ 
-          color: 'red', 
-          marginBottom: '1rem', 
-          padding: '0.5rem',
-          backgroundColor: '#ffe6e6',
-          border: '1px solid #ff9999',
-          borderRadius: '4px'
-        }}>
-          {error}
-        </div>
-      )}
+      <div style={{ maxWidth: '400px', width: '100%' }}>
+        <Card
+          title={isSignUp ? 'Create Account' : 'Sign In'}
+          style={{ textAlign: 'center' }}
+        >
+          {error && (
+            <div style={{ 
+              color: '#dc3545', 
+              marginBottom: '1rem', 
+              padding: '0.5rem',
+              backgroundColor: '#f8d7da',
+              border: '1px solid #f5c6cb',
+              borderRadius: '4px'
+            }}>
+              {error}
+            </div>
+          )}
 
       {!isSignUp ? (
         <form onSubmit={handleSignIn}>
@@ -244,22 +244,24 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         </form>
       )}
 
-      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-        <button
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#e87500',
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}
-        >
-          {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
-        </button>
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#e87500',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+            </button>
+          </div>
+        </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

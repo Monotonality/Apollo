@@ -5,11 +5,13 @@ import { UserProfile } from './types/user';
 import { convertFirebaseUser } from './services/authService';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
+import Directory from './components/Directory';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -30,6 +32,22 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // Handle URL-based routing
+  useEffect(() => {
+    const handleRouteChange = () => {
+      const path = window.location.pathname;
+      if (path === '/directory') {
+        setCurrentPage('directory');
+      } else {
+        setCurrentPage('dashboard');
+      }
+    };
+
+    handleRouteChange();
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
   const handleAuthSuccess = () => {
     // Auth state change will be handled by the onAuthStateChanged listener
   };
@@ -40,6 +58,15 @@ function App() {
       setUser(null);
     } catch (error) {
       console.error('Sign out error:', error);
+    }
+  };
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    if (page === 'directory') {
+      window.history.pushState({}, '', '/directory');
+    } else {
+      window.history.pushState({}, '', '/');
     }
   };
 
@@ -68,13 +95,23 @@ function App() {
     );
   }
 
+  const renderCurrentPage = () => {
+    if (!user) {
+      return <Auth onAuthSuccess={handleAuthSuccess} />;
+    }
+
+    switch (currentPage) {
+      case 'directory':
+        return <Directory currentUser={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+      case 'dashboard':
+      default:
+        return <Dashboard user={user} onSignOut={handleSignOut} onNavigate={handleNavigate} />;
+    }
+  };
+
   return (
     <div className="App" style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      {user ? (
-        <Dashboard user={user} onSignOut={handleSignOut} />
-      ) : (
-        <Auth onAuthSuccess={handleAuthSuccess} />
-      )}
+      {renderCurrentPage()}
     </div>
   );
 }
