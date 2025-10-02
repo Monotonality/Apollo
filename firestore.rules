@@ -6,5 +6,82 @@ service cloud.firestore {
       // Allow authenticated users to read/write user profiles (temporary for debugging)
       allow read, write: if request.auth != null;
     }
+    
+    // COMMITTEE collection
+    match /committee/{committeeId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update/delete for users with manage_committees permission
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true;
+    }
+    
+    // SERVES collection (committee membership)
+    match /serves/{serveId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update/delete for users with manage_committees permission
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true;
+    }
+    
+    // FUNDING collection
+    match /funding/{fundingId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update/delete for users with appropriate permissions
+      allow create, update, delete: if request.auth != null && 
+        (get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.approve_funds == true ||
+         get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true);
+    }
+    
+    // VOLUNTEER collection
+    match /volunteer/{volunteerId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update/delete for users with create_volunteering permission
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.create_volunteering == true;
+    }
+    
+    // VOLUNTEERED collection
+    match /volunteered/{volunteeredId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (to volunteer)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete for users with approve_volunteering permission
+      allow update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.approve_volunteering == true;
+    }
+    
+    // ATTENDANCE collection
+    match /attendance/{attendanceId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update/delete for users with create_attendance permission
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.create_attendance == true;
+    }
+    
+    // ATTENDED collection
+    match /attended/{attendedId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (to record attendance)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete for users with approve_attendance permission
+      allow update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.approve_attendance == true;
+    }
   }
 }

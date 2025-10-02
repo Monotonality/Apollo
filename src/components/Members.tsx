@@ -25,7 +25,7 @@ const Members: React.FC<MembersProps> = ({ currentUser, onSignOut, onNavigate })
   const [updating, setUpdating] = useState<string | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({
     pending: true,
-    active: true,
+    active: false,
     inactive: true,
     rejected: true
   });

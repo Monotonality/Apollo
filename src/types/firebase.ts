@@ -30,7 +30,7 @@ export interface Committee extends FirestoreDocument {
   COMM_ID: string;                // PK - Unique identifier for a committee
   COMM_NAME: string;              // The name of the committee
   COMM_DESCRIPTION: string;       // Detailed description of the committee
-  CHAIR_ID: string;               // FK - ID of the user who chairs the committee
+  CHAIR_ID: string | null;        // FK - ID of the user who chairs the committee (null for inactive committees)
   COMM_IS_ACTIVE: boolean;        // Indicates if the committee is active
   COMM_TIMESTAMP: Date;           // Timestamp of creation or update
 }
