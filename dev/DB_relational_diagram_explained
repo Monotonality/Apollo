@@ -84,6 +84,22 @@ ATND_TIMESTAMP PK Unique identifier for attendance event.
 ATND_CODE N/A Unique attendance code.
 ATND_IS_LIVE N/A Indicates if attendance period is open.
 
+REPORT
+Column Name Key Type Description
+REPORT_ID PK Unique identifier for a committee report.
+COMM_ID FK Links to the COMMITTEE table.
+UID FK Links to the USER table (report author).
+REPORT_TITLE N/A Title of the committee report.
+REPORT_CONTENT N/A Detailed content/body of the report.
+REPORT_TYPE N/A Type of report (e.g., 'monthly', 'quarterly', 'annual', 'event', 'special').
+REPORT_STATUS N/A Status of the report (e.g., 'draft', 'submitted', 'approved', 'published').
+REPORT_DUE_DATE N/A Date the report is due.
+REPORT_SUBMITTED_DATE N/A Date the report was submitted.
+REPORT_APPROVED_DATE N/A Date the report was approved.
+REPORT_TIMESTAMP N/A Creation/update timestamp.
+createdAt N/A Timestamp of report creation.
+updatedAt N/A Timestamp of last update.
+
 IMPLEMENTATION NOTES
 ===================
 

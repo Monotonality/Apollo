@@ -1,4 +1,5 @@
 // Common reusable components
+export { default as Alert } from './Alert';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
 export { default as Input } from './Input';
@@ -24,5 +25,6 @@ export { default as UserCard } from './UserCard';
 export { default as SearchBar } from './SearchBar';
 
 // Export types
+export type { AlertProps } from './Alert';
 export type { ButtonVariant, ButtonSize } from './Button';
 export type { SelectOption } from './Select';

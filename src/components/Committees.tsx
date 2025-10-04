@@ -37,6 +37,14 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
     viceChair: ''
   });
 
+  // Generate random form names to prevent autofill
+  const formFieldNames = {
+    name: `committee-name-${Math.random().toString(36).substr(2, 9)}`,
+    description: `committee-description-${Math.random().toString(36).substr(2, 9)}`,
+    chair: `committee-chair-${Math.random().toString(36).substr(2, 9)}`,
+    viceChair: `committee-vice-chair-${Math.random().toString(36).substr(2, 9)}`
+  };
+
   useEffect(() => {
     fetchMembers();
     fetchCommittees();
@@ -117,10 +125,20 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
+    
+    // Map the random field names back to form data keys
+    let fieldKey = '';
+    if (name === formFieldNames.name) fieldKey = 'name';
+    else if (name === formFieldNames.description) fieldKey = 'description';
+    else if (name === formFieldNames.chair) fieldKey = 'chair';
+    else if (name === formFieldNames.viceChair) fieldKey = 'viceChair';
+    
+    if (fieldKey) {
+      setFormData(prev => ({
+        ...prev,
+        [fieldKey]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -565,6 +583,14 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Hidden field to confuse autofill */}
+            <input 
+              type="text" 
+              name={`fake-field-${Math.random().toString(36).substr(2, 9)}`}
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
             {/* Success Message */}
             {success && (
               <div style={{
@@ -599,10 +625,15 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
               </label>
               <input
                 type="text"
-                name="name"
+                name={formFieldNames.name}
                 value={formData.name}
                 onChange={handleInputChange}
                 required
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                data-lpignore="true"
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -620,11 +651,16 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 Description *
               </label>
               <textarea
-                name="description"
+                name={formFieldNames.description}
                 value={formData.description}
                 onChange={handleInputChange}
                 required
                 rows={4}
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                data-lpignore="true"
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -643,10 +679,12 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 Committee Chair *
               </label>
               <select
-                name="chair"
+                name={formFieldNames.chair}
                 value={formData.chair}
                 onChange={handleInputChange}
                 required
+                autoComplete="off"
+                data-lpignore="true"
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -676,9 +714,11 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
                 Committee Vice Chair
               </label>
               <select
-                name="viceChair"
+                name={formFieldNames.viceChair}
                 value={formData.viceChair}
                 onChange={handleInputChange}
+                autoComplete="off"
+                data-lpignore="true"
                 style={{
                   width: '100%',
                   padding: '0.75rem',
