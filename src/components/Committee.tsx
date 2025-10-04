@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, addDoc, where, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, where, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../types/firebase';
 import { UserProfile } from '../types/user';
-import { Committee as CommitteeType } from '../types/firebase';
+import { Committee as CommitteeType, Report } from '../types/firebase';
+import { createReport, getCommitteeReports } from '../services/firestoreService';
 import PageContainer from './common/PageContainer';
 import Header from './common/Header';
 import Card from './common/Card';
 import Button from './common/Button';
 import LoadingSpinner from './common/LoadingSpinner';
+import Alert from './common/Alert';
 
 interface CommitteeProps {
   user: UserProfile;
@@ -26,6 +28,16 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
   const [joiningCommittee, setJoiningCommittee] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingReport, setIsCreatingReport] = useState(false);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportFormData, setReportFormData] = useState({
+    title: '',
+    description: '',
+    isPublic: false
+  });
+  const [committeeReports, setCommitteeReports] = useState<Report[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [committeeInfoExpanded, setCommitteeInfoExpanded] = useState(false);
 
   useEffect(() => {
     fetchCommittees();
@@ -38,6 +50,16 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
       setLoading(false);
     }
   }, [committeesLoaded, membersLoaded]);
+
+  // Fetch committee reports when user committee is loaded
+  useEffect(() => {
+    if (userCommittees.length > 0 && committees.length > 0) {
+      const userCommittee = committees.find(c => userCommittees.includes(c.id));
+      if (userCommittee) {
+        fetchCommitteeReports(userCommittee.id);
+      }
+    }
+  }, [userCommittees, committees]);
 
   const fetchCommittees = async () => {
     try {
@@ -187,18 +209,69 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
       
       const servesSnapshot = await getDocs(servesQuery);
       console.log('Found SERVES records to delete:', servesSnapshot.docs.length);
+      console.log('SERVES records found:', servesSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() })));
 
       if (servesSnapshot.empty) {
-        throw new Error('No committee membership found to remove');
+        console.log('No SERVES records found, trying alternative query...');
+        // Try alternative query with compound ID format
+        const alternativeQuery = query(
+          collection(db, COLLECTIONS.SERVES),
+          where('UID', '==', user.uid)
+        );
+        const altSnapshot = await getDocs(alternativeQuery);
+        console.log('Alternative query found:', altSnapshot.docs.length, 'records');
+        console.log('Alternative records:', altSnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() })));
+        
+        // Filter by COMM_ID in memory
+        const matchingDocs = altSnapshot.docs.filter(doc => doc.data().COMM_ID === committeeId);
+        console.log('Matching documents after filtering:', matchingDocs.length);
+        
+        if (matchingDocs.length === 0) {
+          throw new Error('No committee membership found to remove');
+        }
+        
+        // Delete the matching documents
+        const deletePromises = matchingDocs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        console.log('Successfully deleted SERVES records (alternative method)');
+      } else {
+        // Delete all SERVES records for this user-committee combination
+        const deletePromises = servesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        console.log('Successfully deleted SERVES records');
       }
 
-      // Delete all SERVES records for this user-committee combination
-      const deletePromises = servesSnapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
-      console.log('Successfully deleted SERVES records');
+      // Find the committee record to check if user is chair or vice chair
+      const committee = committees.find(c => c.id === committeeId);
+      if (committee) {
+        const updateData: any = {};
+        
+        // If user is the chair, clear the chair ID
+        if (committee.CHAIR_ID === user.uid) {
+          updateData.CHAIR_ID = null;
+          console.log('Clearing chair ID for committee:', committeeId);
+        }
+        
+        // If user is the vice chair, clear the vice chair ID
+        if (committee.VICE_CHAIR_ID === user.uid) {
+          updateData.VICE_CHAIR_ID = null;
+          console.log('Clearing vice chair ID for committee:', committeeId);
+        }
+        
+        // Update the committee record if needed
+        if (Object.keys(updateData).length > 0) {
+          const committeeRef = doc(db, COLLECTIONS.COMMITTEE, committeeId);
+          await updateDoc(committeeRef, updateData);
+          console.log('Successfully updated committee record:', updateData);
+        }
+      }
 
       // Update local state
       setUserCommittees(prev => prev.filter(id => id !== committeeId));
+      
+      // Refresh committees data to reflect the role changes
+      await fetchCommittees();
+      
       setSuccess('Successfully left the committee!');
       
       // Clear success message after 3 seconds
@@ -229,6 +302,130 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
     return viceChair ? `${viceChair.USER_FNAME} ${viceChair.USER_LNAME}` : 'Unknown';
   };
 
+  const getAuthorName = (authorId: string) => {
+    const author = members.find(member => member.uid === authorId);
+    return author ? `${author.USER_FNAME} ${author.USER_LNAME}` : 'Unknown Author';
+  };
+
+  const isUserChairOrViceChair = (committee: CommitteeType) => {
+    const isChair = user.uid === committee.CHAIR_ID;
+    const isViceChair = user.uid === committee.VICE_CHAIR_ID;
+    console.log('Committee role check:', {
+      userId: user.uid,
+      userDisplayName: user.displayName,
+      committeeId: committee.id,
+      committeeName: committee.COMM_NAME,
+      chairId: committee.CHAIR_ID,
+      viceChairId: committee.VICE_CHAIR_ID,
+      isChair,
+      isViceChair,
+      chairIdMatch: committee.CHAIR_ID === user.uid,
+      viceChairIdMatch: committee.VICE_CHAIR_ID === user.uid,
+      result: isChair || isViceChair
+    });
+    return isChair || isViceChair;
+  };
+
+  const handleReportInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setReportFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleCreateReport = async (committeeId: string) => {
+    if (!reportFormData.title.trim() || !reportFormData.description.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmittingReport(true);
+      setError(null);
+      setSuccess(null);
+
+      // Create report document using the service
+      const reportData = {
+        REP_ID: `report_${Date.now()}`, // Generate unique ID
+        UID: user.uid,
+        COMM_ID: committeeId,
+        REP_TITLE: reportFormData.title.trim(),
+        REP_DESCRIPTION: reportFormData.description.trim(),
+        REP_IS_PUBLIC: reportFormData.isPublic,
+        REP_TIMESTAMP: new Date()
+      };
+
+      await createReport(reportData);
+      
+      // Add the new report to local state so it appears immediately
+      const newReport: Report = {
+        id: `report_${Date.now()}`, // Use the same ID we generated
+        ...reportData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      setCommitteeReports(prev => {
+        const updated = [newReport, ...prev]; // Add new report at the beginning (most recent first)
+        return updated.sort((a, b) => {
+          const dateA = a.REP_TIMESTAMP instanceof Date ? a.REP_TIMESTAMP : (a.REP_TIMESTAMP as any).toDate();
+          const dateB = b.REP_TIMESTAMP instanceof Date ? b.REP_TIMESTAMP : (b.REP_TIMESTAMP as any).toDate();
+          return dateB.getTime() - dateA.getTime();
+        });
+      });
+      
+      setSuccess(`Report "${reportFormData.title}" has been created successfully!`);
+      resetReportForm();
+      
+    } catch (error: any) {
+      console.error('Error creating report:', error);
+      setError(error.message || 'Failed to create report. Please try again.');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  const resetReportForm = () => {
+    setReportFormData({
+      title: '',
+      description: '',
+      isPublic: false
+    });
+    setIsCreatingReport(false);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const fetchCommitteeReports = async (committeeId: string) => {
+    try {
+      setLoadingReports(true);
+      console.log('Fetching reports for committee:', committeeId);
+      const reports = await getCommitteeReports(committeeId);
+      console.log('Fetched reports:', reports);
+      
+      // Sort reports by timestamp (most recent first)
+      const sortedReports = reports.sort((a, b) => {
+        const dateA = a.REP_TIMESTAMP instanceof Date ? a.REP_TIMESTAMP : (a.REP_TIMESTAMP as any).toDate();
+        const dateB = b.REP_TIMESTAMP instanceof Date ? b.REP_TIMESTAMP : (b.REP_TIMESTAMP as any).toDate();
+        return dateB.getTime() - dateA.getTime();
+      });
+      setCommitteeReports(sortedReports);
+      console.log('Set committee reports:', sortedReports.length, 'reports');
+    } catch (error) {
+      console.error('Error fetching committee reports:', error);
+      console.error('Error details:', {
+        committeeId,
+        error: error,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      setError(`Failed to load committee reports: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+
   if (loading) {
     return (
       <PageContainer>
@@ -240,11 +437,27 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
   // If user is already in committees, show their committee info
   if (userCommittees.length > 0) {
     const userCommittee = committees.find(c => userCommittees.includes(c.id));
+    console.log('User committee data:', {
+      userCommittees,
+      userCommittee,
+      user: {
+        uid: user.uid,
+        name: user.displayName
+      },
+      committeeDetails: userCommittee ? {
+        id: userCommittee.id,
+        name: userCommittee.COMM_NAME,
+        chairId: userCommittee.CHAIR_ID,
+        viceChairId: userCommittee.VICE_CHAIR_ID,
+        isUserChair: userCommittee.CHAIR_ID === user.uid,
+        isUserViceChair: userCommittee.VICE_CHAIR_ID === user.uid
+      } : null
+    });
     
     return (
       <PageContainer>
         <Header
-          title="Committee"
+          title={userCommittee ? userCommittee.COMM_NAME : "Committee"}
           user={{
             displayName: user.displayName,
             role: user.USER_ORG_ROLE || 'Member'
@@ -264,27 +477,236 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
           onNavigate={onNavigate}
         />
 
-        {/* User's Committee Info */}
+        {/* Success Message */}
+        {success && (
+          <Alert
+            variant="success"
+            message={success}
+            dismissible={true}
+            onDismiss={() => setSuccess(null)}
+            style={{ marginBottom: '1rem' }}
+          />
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <Alert
+            variant="error"
+            message={error}
+            dismissible={true}
+            onDismiss={() => setError(null)}
+            style={{ marginBottom: '1rem' }}
+          />
+        )}
+
+
+        {/* Report Creation Section - Only for Chairs and Vice Chairs */}
+        {userCommittee && isUserChairOrViceChair(userCommittee) && (
+          <Card title="Create Committee Report" style={{ marginBottom: '2rem' }}>
+            {!isCreatingReport ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
+                    Create committee reports and documentation as {user.uid === userCommittee.CHAIR_ID ? 'Chair' : 'Vice Chair'}.
+                  </p>
+                </div>
+                <Button 
+                  variant="primary" 
+                  size="medium" 
+                  onClick={() => setIsCreatingReport(true)}
+                  disabled={isSubmittingReport}
+                >
+                  Create Report
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); handleCreateReport(userCommittee.id); }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Report Title */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#154734' }}>
+                    Report Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={reportFormData.title}
+                    onChange={handleReportInputChange}
+                    required
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '1rem'
+                    }}
+                    placeholder="Enter report title"
+                  />
+                </div>
+
+
+                {/* Report Description */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#154734' }}>
+                    Report Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={reportFormData.description}
+                    onChange={handleReportInputChange}
+                    required
+                    rows={6}
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                      resize: 'vertical'
+                    }}
+                    placeholder="Enter detailed report description..."
+                  />
+                </div>
+
+                {/* Public Visibility */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    name="isPublic"
+                    checked={reportFormData.isPublic}
+                    onChange={handleReportInputChange}
+                    style={{ transform: 'scale(1.2)' }}
+                  />
+                  <label style={{ fontWeight: 'bold', color: '#154734' }}>
+                    Make this report public (visible to all club members)
+                  </label>
+                </div>
+
+                {/* Form Actions */}
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="medium"
+                    onClick={resetReportForm}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="medium"
+                    disabled={isSubmittingReport || !reportFormData.title || !reportFormData.description}
+                  >
+                    {isSubmittingReport ? 'Creating...' : 'Create Report'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Card>
+        )}
+
+        {/* Committee Reports Section - Show if there are reports, hide if none */}
+        {userCommittee && committeeReports.length > 0 && (
+          <Card 
+            title={`Committee Reports (${committeeReports.length})`}
+            style={{ marginBottom: '2rem' }}
+          >
+            {loadingReports ? (
+              <LoadingSpinner message="Loading reports..." />
+            ) : (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {committeeReports.map((report) => (
+                  <div 
+                    key={report.id} 
+                    style={{ 
+                      padding: '1rem',
+                      border: '1px solid #e9ecef',
+                      borderRadius: '8px',
+                      backgroundColor: '#f8f9fa'
+                    }}
+                  >
+                        <div style={{ textAlign: 'left' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', color: '#154734', textAlign: 'left' }}>
+                            {report.REP_TITLE}
+                          </h4>
+                          <p style={{ margin: '0 0 0.5rem 0', color: '#666', textAlign: 'left' }}>
+                            {report.REP_DESCRIPTION}
+                          </p>
+                          <p style={{ margin: '0 0 0.5rem 0', color: '#888', fontSize: '0.875rem', textAlign: 'left' }}>
+                            <strong>Author:</strong> {getAuthorName(report.UID)}
+                          </p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                              <span style={{ 
+                                padding: '0.25rem 0.5rem', 
+                                borderRadius: '4px', 
+                                fontSize: '0.75rem',
+                                backgroundColor: report.REP_IS_PUBLIC ? '#d4edda' : '#fff3cd',
+                                color: report.REP_IS_PUBLIC ? '#155724' : '#856404'
+                              }}>
+                                {report.REP_IS_PUBLIC ? 'Public' : 'Committee Only'}
+                              </span>
+                            </div>
+                            <p style={{ margin: '0', color: '#999', fontSize: '0.875rem', textAlign: 'right' }}>
+                              {report.REP_TIMESTAMP instanceof Date 
+                                ? report.REP_TIMESTAMP.toLocaleDateString()
+                                : (report.REP_TIMESTAMP as any).toDate().toLocaleDateString()
+                              }
+                            </p>
+                          </div>
+                        </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Committee Info Section - At bottom with dropdown */}
         {userCommittee && (
-          <Card title={`${userCommittee.COMM_NAME} Committee`} style={{ marginBottom: '2rem' }}>
-            <div style={{ lineHeight: '1.6' }}>
-              <p><strong>Description:</strong> {userCommittee.COMM_DESCRIPTION}</p>
-              <p><strong>Chair:</strong> {getChairName(userCommittee.CHAIR_ID)}</p>
-              <p><strong>Vice Chair:</strong> {getViceChairName(userCommittee.VICE_CHAIR_ID)}</p>
-              <p><strong>Member Since:</strong> {new Date().toLocaleDateString()}</p>
-              
-              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e9ecef' }}>
+          <Card 
+            title={
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Committee Info</span>
                 <Button
                   variant="secondary"
                   size="small"
-                  onClick={() => handleLeaveCommittee(userCommittee.id)}
-                  disabled={joiningCommittee === userCommittee.id}
-                  style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }}
+                  onClick={() => setCommitteeInfoExpanded(!committeeInfoExpanded)}
                 >
-                  {joiningCommittee === userCommittee.id ? 'Leaving...' : 'Leave Committee'}
+                  {committeeInfoExpanded ? '▼ Hide Info' : '▶ Show Info'}
                 </Button>
               </div>
-            </div>
+            }
+            style={{ marginBottom: '2rem' }}
+          >
+            {committeeInfoExpanded && (
+              <div style={{ lineHeight: '1.6' }}>
+                <p><strong>Description:</strong> {userCommittee.COMM_DESCRIPTION}</p>
+                <p><strong>Chair:</strong> {getChairName(userCommittee.CHAIR_ID)}</p>
+                <p><strong>Vice Chair:</strong> {getViceChairName(userCommittee.VICE_CHAIR_ID)}</p>
+                <p><strong>Member Since:</strong> {new Date().toLocaleDateString()}</p>
+                
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e9ecef' }}>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => handleLeaveCommittee(userCommittee.id)}
+                    disabled={joiningCommittee === userCommittee.id}
+                    style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }}
+                  >
+                    {joiningCommittee === userCommittee.id ? 'Leaving...' : 'Leave Committee'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
       </PageContainer>

@@ -21,8 +21,10 @@ import {
   Volunteer, 
   Volunteered,
   Attended,
-  Attendance
+  Attendance,
+  Report
 } from '../types/firebase';
+import { UserProfile } from '../types/user';
 
 // Generic CRUD operations
 export const createDocument = async <T extends { [key: string]: any }>(
@@ -215,4 +217,47 @@ export const getAttendanceEvents = async (): Promise<Attendance[]> => {
 
 export const getLiveAttendance = async (): Promise<Attendance[]> => {
   return getDocuments<Attendance>(COLLECTIONS.ATTENDANCE, [{ field: 'ATND_IS_LIVE', operator: '==', value: true }], 'ATND_TIMESTAMP', 'desc');
+};
+
+// REPORT - Committee report operations
+export const createReport = async (data: Omit<Report, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  return createDocument<Report>(COLLECTIONS.REPORT, data);
+};
+
+export const getReport = async (id: string): Promise<Report | null> => {
+  return getDocument<Report>(COLLECTIONS.REPORT, id);
+};
+
+export const getReports = async (commId?: string, uid?: string, isPublic?: boolean): Promise<Report[]> => {
+  const filters = [];
+  if (commId) filters.push({ field: 'COMM_ID', operator: '==', value: commId });
+  if (uid) filters.push({ field: 'UID', operator: '==', value: uid });
+  if (isPublic !== undefined) filters.push({ field: 'REP_IS_PUBLIC', operator: '==', value: isPublic });
+  
+  return getDocuments<Report>(COLLECTIONS.REPORT, filters, 'REP_TIMESTAMP', 'desc');
+};
+
+export const getCommitteeReports = async (commId: string): Promise<Report[]> => {
+  return getDocuments<Report>(COLLECTIONS.REPORT, [{ field: 'COMM_ID', operator: '==', value: commId }], 'REP_TIMESTAMP', 'desc');
+};
+
+export const getUserReports = async (uid: string): Promise<Report[]> => {
+  return getDocuments<Report>(COLLECTIONS.REPORT, [{ field: 'UID', operator: '==', value: uid }], 'REP_TIMESTAMP', 'desc');
+};
+
+export const getPublicReports = async (): Promise<Report[]> => {
+  return getDocuments<Report>(COLLECTIONS.REPORT, [{ field: 'REP_IS_PUBLIC', operator: '==', value: true }], 'REP_TIMESTAMP', 'desc');
+};
+
+export const updateReport = async (id: string, data: Partial<Omit<Report, 'id' | 'createdAt'>>): Promise<void> => {
+  return updateDocument<Report>(COLLECTIONS.REPORT, id, data);
+};
+
+export const deleteReport = async (id: string): Promise<void> => {
+  return deleteDocument(COLLECTIONS.REPORT, id);
+};
+
+// USER collection operations
+export const getMembers = async (): Promise<UserProfile[]> => {
+  return getDocuments<UserProfile>(COLLECTIONS.USER, [], 'USER_FNAME', 'asc');
 };

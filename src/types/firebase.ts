@@ -88,13 +88,13 @@ export interface Attendance extends FirestoreDocument {
   ATND_IS_LIVE: boolean;          // Indicates if attendance period is open
 }
 
-// REPORT - Committee reports
+// REPORT - Committee reports and documentation
 export interface Report extends FirestoreDocument {
-  REP_ID: string;                 // PK - Unique identifier for a report
-  UID: string;                    // FK - ID of the user who authored the report
-  COMM_ID: string;                // FK - ID of the committee the report is from
-  REP_TITLE: string;              // Title of the report
+  REP_ID: string;                 // PK - Unique identifier for a committee report
+  UID: string;                    // FK - Links to the USER table (report author)
+  COMM_ID: string;                // FK - Links to the COMMITTEE table
+  REP_TITLE: string;              // Title of the committee report
   REP_DESCRIPTION: string;        // Description/content of the report
   REP_IS_PUBLIC: boolean;         // Indicates if report is public (visible to all club members) or committee-only
-  REP_TIMESTAMP: Date;            // Timestamp of report creation or update
+  REP_TIMESTAMP: Date;            // Creation/update timestamp
 }
