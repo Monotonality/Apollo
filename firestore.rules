@@ -12,9 +12,15 @@ service cloud.firestore {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow create/update/delete for users with manage_committees permission
-      allow create, update, delete: if request.auth != null && 
+      // Allow create/delete for users with manage_committees permission
+      allow create, delete: if request.auth != null && 
         get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true;
+      
+      // Allow update for users with manage_committees permission OR when clearing own role
+      allow update: if request.auth != null && 
+        (get(/databases/$(database)/documents/user/$(request.auth.uid)).data.permissions.manage_committees == true ||
+         (resource.data.CHAIR_ID == request.auth.uid && request.resource.data.CHAIR_ID == null) ||
+         (resource.data.VICE_CHAIR_ID == request.auth.uid && request.resource.data.VICE_CHAIR_ID == null));
     }
     
     // SERVES collection (committee membership)
