@@ -5,13 +5,12 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 // Firebase configuration
 const firebaseConfig = {
-  // These will be replaced with actual config when deploying to production
-  apiKey: "demo-api-key",
-  authDomain: "demo-no-project.firebaseapp.com",
-  projectId: "demo-no-project",
-  storageBucket: "demo-no-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyDkADTzCPhfAd2uAZwIltfiiqbMlMo8XuM",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "apollo-20595883-a61f4.firebaseapp.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "apollo-20595883-a61f4",
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "apollo-20595883-a61f4.firebasestorage.app",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "67057732331",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:67057732331:web:8b24ce1fc7c383daad0cae"
 };
 
 // Initialize Firebase
@@ -22,8 +21,9 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development') {
+// Connect to emulators only if explicitly enabled
+// Set REACT_APP_USE_EMULATORS=true in .env.local to use emulators
+if (process.env.REACT_APP_USE_EMULATORS === 'true') {
   try {
     // Firestore emulator
     connectFirestoreEmulator(db, 'localhost', 8081);
@@ -33,10 +33,13 @@ if (process.env.NODE_ENV === 'development') {
     
     // Storage emulator
     connectStorageEmulator(storage, 'localhost', 9199);
+    console.log('Connected to Firebase emulators');
   } catch (error) {
     // Emulators already connected
     console.log('Firebase emulators already connected');
   }
+} else {
+  console.log('Connected to Firebase production');
 }
 
 export default app;

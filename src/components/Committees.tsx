@@ -78,8 +78,11 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
           lastLoginAt: data.lastLoginAt?.toDate()
         } as UserProfile;
         
-        // Only include active members with Member role
-        if (userProfile.USER_ORG_ROLE === 'Member' && userProfile.USER_IS_ACTIVE) {
+        // Include active members with Member, President, or Vice President roles
+        if ((userProfile.USER_ORG_ROLE === 'Member' || 
+             userProfile.USER_ORG_ROLE === 'President' || 
+             userProfile.USER_ORG_ROLE === 'Vice President') && 
+            userProfile.USER_IS_ACTIVE) {
           membersList.push(userProfile);
         }
       });
@@ -422,13 +425,19 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
 
   const getChairName = (chairId: string) => {
     const chair = members.find(member => member.uid === chairId);
-    return chair ? `${chair.USER_FNAME} ${chair.USER_LNAME}` : 'Unknown';
+    if (!chair) return 'Unknown';
+    return chair.USER_ORG_ROLE !== 'Member' 
+      ? `${chair.USER_FNAME} ${chair.USER_LNAME} (${chair.USER_ORG_ROLE})`
+      : `${chair.USER_FNAME} ${chair.USER_LNAME}`;
   };
 
   const getViceChairName = (viceChairId: string | null) => {
     if (!viceChairId) return 'No vice chair assigned';
     const viceChair = members.find(member => member.uid === viceChairId);
-    return viceChair ? `${viceChair.USER_FNAME} ${viceChair.USER_LNAME}` : 'Unknown';
+    if (!viceChair) return 'Unknown';
+    return viceChair.USER_ORG_ROLE !== 'Member' 
+      ? `${viceChair.USER_FNAME} ${viceChair.USER_LNAME} (${viceChair.USER_ORG_ROLE})`
+      : `${viceChair.USER_FNAME} ${viceChair.USER_LNAME}`;
   };
 
   const getMemberOptions = (): SelectOption[] => {
@@ -436,7 +445,7 @@ const Committees: React.FC<CommitteesProps> = ({ user, onSignOut, onNavigate }) 
       { value: '', label: 'None' },
       ...members.map(member => ({
         value: member.uid,
-        label: `${member.USER_FNAME} ${member.USER_LNAME}`
+        label: `${member.USER_FNAME} ${member.USER_LNAME}${member.USER_ORG_ROLE !== 'Member' ? ` (${member.USER_ORG_ROLE})` : ''}`
       }))
     ];
   };

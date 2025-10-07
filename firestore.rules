@@ -9,8 +9,8 @@ service cloud.firestore {
     
     // COMMITTEE collection
     match /committee/{committeeId} {
-      // Allow read for authenticated users
-      allow read: if request.auth != null;
+      // Allow read for all users (temporary for testing)
+      allow read: if true;
       
       // Allow create/delete for users with manage_committees permission
       allow create, delete: if request.auth != null && 

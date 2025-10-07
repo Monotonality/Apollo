@@ -28,7 +28,13 @@
     "emulators:firestore": "firebase emulators:start --only firestore",
     "emulators:auth": "firebase emulators:start --only auth",
     "emulators:storage": "firebase emulators:start --only storage",
-    "dev": "concurrently \"npm start\" \"npm run emulators\""
+    "dev": "concurrently \"npm start\" \"npm run emulators\"",
+    "predeploy": "npm run build",
+    "deploy": "firebase deploy",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "deploy:firestore": "firebase deploy --only firestore",
+    "deploy:storage": "firebase deploy --only storage",
+    "deploy:all": "firebase deploy"
   },
   "eslintConfig": {
     "extends": [

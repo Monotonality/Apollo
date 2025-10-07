@@ -1,4 +1,47 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "report",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "REP_IS_PUBLIC",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "REP_TIMESTAMP",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "committee",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "COMM_IS_ACTIVE",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "COMM_NAME",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "report",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "COMM_ID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "REP_TIMESTAMP",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }
