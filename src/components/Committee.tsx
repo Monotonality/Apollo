@@ -465,7 +465,7 @@ const Committee: React.FC<CommitteeProps> = ({ user, onSignOut, onNavigate }) =>
           onSignOut={onSignOut}
           navItems={[
             { label: 'Dashboard', path: 'dashboard' },
-            ...(user.USER_ORG_ROLE === 'Member' || user.USER_ORG_ROLE === 'Data & Systems Officer' ? [{ label: 'Committee', path: 'committee' }] : []),
+            ...(user.permissions?.create_committees || user.permissions?.manage_committees ? [{ label: 'Committee', path: 'committee' }] : []),
             { label: 'Directory', path: 'directory' },
             { label: 'Profile', path: 'profile' },
             { label: 'About', path: 'about' },

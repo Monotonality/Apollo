@@ -5,13 +5,12 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 // Firebase configuration
 const firebaseConfig = {
-  // These will be replaced with actual config when deploying to production
-  apiKey: "demo-api-key",
-  authDomain: "demo-no-project.firebaseapp.com",
-  projectId: "demo-no-project",
-  storageBucket: "demo-no-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyDkADTzCPhfAd2uAZwIltfiiqbMlMo8XuM",
+  authDomain: "apollo-20595883-a61f4.firebaseapp.com",
+  projectId: "apollo-20595883-a61f4",
+  storageBucket: "apollo-20595883-a61f4.firebasestorage.app",
+  messagingSenderId: "67057732331",
+  appId: "1:67057732331:web:8b24ce1fc7c383daad0cae"
 };
 
 // Initialize Firebase
@@ -22,21 +21,21 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development') {
-  try {
-    // Firestore emulator
-    connectFirestoreEmulator(db, 'localhost', 8081);
-    
-    // Auth emulator
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    
-    // Storage emulator
-    connectStorageEmulator(storage, 'localhost', 9199);
-  } catch (error) {
-    // Emulators already connected
-    console.log('Firebase emulators already connected');
-  }
-}
+// Connect to emulators in development (DISABLED - using production Firebase)
+// if (process.env.NODE_ENV === 'development') {
+//   try {
+//     // Firestore emulator
+//     connectFirestoreEmulator(db, 'localhost', 8081);
+//     
+//     // Auth emulator
+//     connectAuthEmulator(auth, 'http://localhost:9099');
+//     
+//     // Storage emulator
+//     connectStorageEmulator(storage, 'localhost', 9199);
+//   } catch (error) {
+//     // Emulators already connected
+//     console.log('Firebase emulators already connected');
+//   }
+// }
 
 export default app;

@@ -91,8 +91,8 @@ export const ROLES: Record<UserRole, Role> = {
       manage_site: false,
       approve_members: true,
       create_volunteering: false,
-      create_committees: false,
-      manage_committees: false
+      create_committees: true,
+      manage_committees: true
     }
   },
   'Internal Affairs Officer': {
